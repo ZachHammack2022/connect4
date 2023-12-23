@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from game import Connect4Env
+from game.game import Connect4Env
 from fastapi import HTTPException
 
 

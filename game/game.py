@@ -11,6 +11,9 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=2, shape=(6, 7), dtype=int)
         self.terminated = False
         self.winner = None
+        
+    def seed(self, seed=None):
+        random.seed(seed)
 
     def step(self, action):
         # Check if action is valid

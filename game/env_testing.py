@@ -1,5 +1,5 @@
 import unittest
-from server.game import Connect4Env
+from game.game import Connect4Env
 
 class TestConnect4Env(unittest.TestCase):
 
