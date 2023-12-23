@@ -9,28 +9,36 @@ class Connect4Env(gym.Env):
         self.current_player = 'X'
         self.action_space = spaces.Discrete(7)  # 7 columns
         self.observation_space = spaces.Box(low=0, high=2, shape=(6, 7), dtype=int)
+        self.terminated = False
+        self.winner = None
 
     def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):
-            return self._get_obs(), -10, True, {"msg": "Invalid action, column full."}
-
+            return self._get_obs(), -10, self.terminated, {"msg": "Invalid action, column full."}
+        if self.terminated:
+            return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
+            
         player_who_moved = self.current_player
         self._make_move(action)
         
         # Check if the move resulted in a win
         won = self.check_winner(player_who_moved)
-        done = won or self._is_board_full()
+        if won:
+            self.winner = player_who_moved
+        self.terminated = won or self._is_board_full()
     
         # If the game is won, reward should be 1, otherwise 0
         reward = 1 if won else 0
 
-        return self._get_obs(), reward, done, {}
+        return self._get_obs(), reward, self.terminated, {}
 
 
     def reset(self):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
+        self.terminated = False
+        self.winner = None
         return self._get_obs()
 
     def render(self, mode='human', close=False):
@@ -67,7 +75,7 @@ class Connect4Env(gym.Env):
         return obs
 
     def _is_valid_action(self, action):
-        return self.board[0][action] == ' '
+        return self.board[0][action] == ' ' 
 
     def _is_board_full(self):
         return all(cell != ' ' for row in self.board for cell in row)
@@ -78,12 +86,12 @@ class Connect4Env(gym.Env):
         for row in self.board:
             print('|' + '|'.join(row) + '|')
 
-    def make_move(self, column):
-        for row in reversed(self.board):
-            if row[column] == ' ':
-                row[column] = self.current_player
-                return True
-        return False
+    # def make_move(self, column):
+    #     for row in reversed(self.board):
+    #         if row[column] == ' ':
+    #             row[column] = self.current_player
+    #             return True
+    #     return False
     
     def check_horizontal(self,player):
         # Check horizontal
@@ -183,5 +191,5 @@ def random_agent_test(env,render=True):
 
 if __name__ == "__main__":
     env = Connect4Env()
-    # play_game(env)
-    random_agent_test(env)
+    play_game(env)
+    # random_agent_test(env)
