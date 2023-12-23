@@ -27,7 +27,7 @@ def make_move(move: Move):
     if game.terminated:
         return {"board": game._get_obs(), "reward": 0, "done": True, "winner": game.winner}
     _, reward, terminated, _ = game.step(move.column)
-    return {"board": game._get_obs(), "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
+    return {"board": game._get_obs()["board"], "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
 
 @app.post("/reset")
 def reset_game():
@@ -35,4 +35,4 @@ def reset_game():
 
 @app.get("/state")
 def get_state():
-    return {"board": game._get_obs(), "current_player": game.current_player}
+    return {"board": game._get_obs()["board"], "current_player": game.current_player}
