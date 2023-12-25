@@ -39,7 +39,6 @@ const GameBoard: React.FC = () => {
         return;
       }
 
-
     try {
       const response = await axios.post<MoveSuccessResponse>('/move', { column });
       updateGameBoard(response.data.board);

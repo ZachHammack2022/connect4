@@ -1,96 +1,63 @@
-from tqdm import tqdm
 import torch
-import numpy as np
-# from plots import plot_training_rewards,
-from utils import  save_episode_data, check_dir 
-import os
-from game.game import Connect4Env
 from dqn import QLearningAgent
-# from plots import plot_activity_counts
+from game.game import Connect4Env
+import os
 
-### Train your agent ###
-def tes_agent(env,agent, num_episodes,output_dir="testing_output"):
-    alg_name = agent.name
-    full_output_dir = os.path.join(output_dir,alg_name)
+# def load_agent(model_path):
+#     agent = QLearningAgent(0.001, 16, 100000)  # Ensure the architecture matches
+#     agent.model.load_state_dict(torch.load(model_path))
+#     agent.model.eval()  # Set the model to evaluation mode
+#     return agent
 
-    # check_dir(full_output_dir)
+def load_model_weights(path):
+    agent = QLearningAgent(0.001, 16, 100000)
+    model_weights = torch.load(path)
+    agent.model.load_state_dict(model_weights)
+    agent.model.eval()
+    return agent
 
-    if not os.path.exists(full_output_dir):
-        os.makedirs(full_output_dir)
+def play_game(env, model):
+    state = env.reset()
+    done = False
 
-    # # tracked over all episodes for plots
-    # all_rewards = [] 
-    
-    
-    model_update_frequency = 5
-    output_frequency = 100
+    while not done:
+        env.render()
 
-    # # reset episode stats
-    # recent_episodes = []
-    # recent_a0_rewards = []
-    # recent_a1_rewards = []
-    
+        if env.current_player == 'X':  # Assuming 'X' is the human player
+            valid_move = False
+            while not valid_move:
+                try:
+                    action = int(input(f"Player {env.current_player}, choose a column (0-6): "))
+                    if action < 0 or action > 6:
+                        raise ValueError
 
-    for episode in tqdm(range(num_episodes), desc="Training Progress", ascii=True):
+                    if env.board[0][action] != ' ':
+                        print("Column is full. Try a different one.")
+                    else:
+                        valid_move = True
+                except ValueError:
+                    print("Invalid column. Try again.")
+        else:
+            # The agent (model) makes a move
+            print(state)
+            action= model.find_greedy_action(state)
+            print(f"Agent chooses column: {action}")
 
-        # Episode termination flag
-        terminated = False
+        state, reward, done, info = env.step(action)
+        print(env.current_player)
 
-        # # tracked per episode for recent_episode stats
-        # episode_reward = 0
-        # episode_a0 = 0
-        # episode_a1 = 0
-
-
-        state_dict = env.reset()
-        
-        # start with turn_index = 0
-        turn_idx = 0
-        step = 0
-        old_action,old_state_dict = None,None
-        while not terminated:
-            
-            
-            action = agent.find_action(turn_idx,state_dict["board"])
-            
-            new_state_dict, reward, terminated, info = env.step(action)
-            
-            if step > 0:
-                agent.replay_buffer.push(state_dict, action, reward, new_state_dict, terminated)
-                agent.replay_buffer.push(old_state_dict, old_action, - reward, state_dict, terminated)
-            
-            if episode % model_update_frequency == 0 and episode != 0:
-                agent.update_model()
-                
-            old_state_dict = state_dict
-            old_action = action
-            state_dict = new_state_dict
-            step +=1
-            
-            # switch agent
-            if turn_idx==0:
-                turn_idx = 1
+        if done:
+            env.render()
+            if reward == 1:
+                print(f"Player {env.winner} wins!")
             else:
-                turn_idx = 0
+                print("Game over!")
+            break
 
-        # all_rewards.append(episode_reward)
- 
-    
 
-        if episode % agent.target_update_freq == 0:
-            agent.target_model.load_state_dict(agent.model.state_dict())
-            
-        if episode % output_frequency == 0 and episode != 0:
-            folder_name = f"{full_output_dir}/episode_{episode}"
-            # Check if the directory exists, and if not, create it
-            check_dir(folder_name)
-            agent.save_model_weights(folder_name)
-            print(f"epsilon: {agent.epsilon}")
-            
-    
-
-if __name__ =="__main__":
+if __name__ == "__main__":
     env = Connect4Env()
-    agent = QLearningAgent(0.001,16,100000)
-    test_agent(env,agent,10000)
-    
+    agent_model_path = '/Users/zhammack/Downloads/cs/connect4/rl_agent/output/dqn/episode_99000/model_weights.pth'
+    agent = load_model_weights(agent_model_path)
+    for i in range(10):
+        play_game(env, agent)

@@ -11,11 +11,14 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=2, shape=(43,), dtype=int)
         self.terminated = False
         self.winner = None
+    
+    def seed(self, seed=None):
+        random.seed(seed)
 
     def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):
-            return self._get_obs(), -10, self.terminated, {"msg": "Invalid action, column full."}
+            return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}
         if self.terminated:
             return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
             

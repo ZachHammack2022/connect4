@@ -29,12 +29,13 @@ class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
         # Fully connected layers
-        self.fc1 = nn.Linear(6 * 7 + 1, 128)  # Flatten the 6x7 grid + agent index
+        self.fc1 = nn.Linear(43, 128)  # Flatten the 6x7 grid + agent index
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 7)  # 7 actions for the output layer
 
     def forward(self, x):
         # Ensure input tensor is properly shaped
+        x = x.float()
         x = x.view(x.size(0), -1)
         # Forward pass through the network
         x = F.relu(self.fc1(x))
@@ -59,10 +60,10 @@ class ReplayBuffer:
         
     
         # Convert action, reward, and done to tensors if they are not already, directly on the device
-        state = torch.tensor([state], dtype=torch.int64, device=self.device) if not isinstance(state, torch.Tensor) else state.to(self.device)
+        state = torch.tensor([state], dtype=torch.float, device=self.device) if not isinstance(state, torch.Tensor) else state.to(self.device)
         action = torch.tensor([action], dtype=torch.int64, device=self.device) if not isinstance(action, torch.Tensor) else action.to(self.device)
         reward = torch.tensor([reward], dtype=torch.float, device=self.device) if not isinstance(reward, torch.Tensor) else reward.to(self.device)
-        next_state = torch.tensor([next_state], dtype=torch.int64, device=self.device) if not isinstance(next_state, torch.Tensor) else next_state.to(self.device)
+        next_state = torch.tensor([next_state], dtype=torch.float, device=self.device) if not isinstance(next_state, torch.Tensor) else next_state.to(self.device)
         done = torch.tensor([done], dtype=torch.float, device=self.device) if not isinstance(done, torch.Tensor) else done.to(self.device)
 
         # Create an experience tuple and append it to the memory
@@ -104,28 +105,23 @@ class QLearningAgent(object):
     
     
 
-    def find_greedy_action(self, agent_idx, state) -> int:
+    def find_greedy_action(self, state) -> int:
         self.model.eval()  # Set the model to evaluation mode
 
         # Flatten the 2D state array and convert it to a tensor
         state_tensor = torch.tensor(state, dtype=torch.float32).flatten()
-
-        # Convert agent_idx to a tensor and append it to the state tensor
-        agent_idx_tensor = torch.tensor([agent_idx], dtype=torch.float32)
-        combined_state = torch.cat((state_tensor, agent_idx_tensor), 0)
-
         # Pass the combined state tensor to the model and find the action
-        action = torch.argmax(self.model(combined_state.unsqueeze(0))).item()
+        action = torch.argmax(self.model(state_tensor.unsqueeze(0))).item()
 
         self.model.train()
         return int(action)
 
     
-    def find_action(self, turn_idx,state) -> int:
+    def find_action(self,state) -> int:
         if (np.random.uniform(0,1) < self.epsilon):
             action = np.random.randint(self.num_actions)
         else: 
-            action = self.find_greedy_action(turn_idx,state)
+            action = self.find_greedy_action(state)
     
         return action
     

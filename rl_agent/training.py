@@ -23,7 +23,7 @@ def train_agent(env,agent, num_episodes,output_dir="output"):
     
     
     model_update_frequency = 5
-    output_frequency = 100
+    output_frequency = 1000
 
     # # reset episode stats
     # recent_episodes = []
@@ -42,40 +42,37 @@ def train_agent(env,agent, num_episodes,output_dir="output"):
         # episode_a1 = 0
 
 
-        state_dict = env.reset()
+        state = env.reset()
         
-        # start with turn_index = 0
-        turn_idx = 0
+   
         step = 0
-        old_action,old_state_dict = None,None
+        old_action,old_state = None,None
         while not terminated:
             
+            valid = False
+            count = 0
+            while not valid and count <3:
+                action = agent.find_action(state)
+                valid =  env._is_valid_action(action)
+                count +=1
+                
+      
             
-            action = agent.find_action(turn_idx,state_dict["board"])
+            new_state, reward, terminated, info = env.step(action)
+            # print(state, action, reward, new_state, terminated)
             
-            new_state_dict, reward, terminated, info = env.step(action)
-            
+            agent.replay_buffer.push(state, action, reward, new_state, terminated)
             if step > 0:
-                agent.replay_buffer.push(state_dict, action, reward, new_state_dict, terminated)
-                agent.replay_buffer.push(old_state_dict, old_action, - reward, state_dict, terminated)
+                agent.replay_buffer.push(old_state, old_action, - reward, state, terminated)
             
             if episode % model_update_frequency == 0 and episode != 0:
                 agent.update_model()
                 
-            old_state_dict = state_dict
+            old_state = state
             old_action = action
-            state_dict = new_state_dict
+            state = new_state
             step +=1
             
-            # switch agent
-            if turn_idx==0:
-                turn_idx = 1
-            else:
-                turn_idx = 0
-
-        # all_rewards.append(episode_reward)
- 
-    
 
         if episode % agent.target_update_freq == 0:
             agent.target_model.load_state_dict(agent.model.state_dict())
@@ -104,5 +101,5 @@ def train_agent(env,agent, num_episodes,output_dir="output"):
 if __name__ =="__main__":
     env = Connect4Env()
     agent = QLearningAgent(0.001,16,100000)
-    train_agent(env,agent,10000)
+    train_agent(env,agent,100000)
     
