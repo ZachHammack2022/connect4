@@ -8,35 +8,29 @@ class Connect4Env(gym.Env):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
         self.action_space = spaces.Discrete(7)  # 7 columns
-        # Define observation space as a dictionary space
-        self.observation_space = spaces.Dict({
-            "board": spaces.Box(low=0, high=2, shape=(6, 7), dtype=int),
-            "player_index": spaces.Discrete(2)  # 0 for 'X', 1 for 'O'
-        })
+        self.observation_space = spaces.Box(low=0, high=2, shape=(43,), dtype=int)
         self.terminated = False
         self.winner = None
-        
-    def seed(self, seed=None):
-        random.seed(seed)
 
     def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):
-            return self._get_obs(), -5, self.terminated, {"msg": "Invalid action, column full."}
+            return self._get_obs(), -10, self.terminated, {"msg": "Invalid action, column full."}
         if self.terminated:
-            return self._get_obs(), -1, self.terminated, {"msg": "Game terminated."}
+            return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
             
-        player_who_moved = self.current_player
         self._make_move(action)
         
         # Check if the move resulted in a win
-        player_win = self.check_winner(player_who_moved)
-        if player_win:
-            self.winner = player_who_moved
-        self.terminated = player_win or self._is_board_full()
-    
-        # If the game is won, reward should be 1, otherwise 0
-        reward = 1 if player_win else 0
+        won = self.check_winner(self.current_player)
+        if won:
+            self.winner = self.current_player
+            self.terminated = True
+            reward = 1
+        else:
+            self.terminated = self._is_board_full()
+            reward = 0
+            self.switch_player()  # Switch player only if no win
 
         return self._get_obs(), reward, self.terminated, {}
 
@@ -64,25 +58,23 @@ class Connect4Env(gym.Env):
             if row[column] == ' ':
                 row[column] = self.current_player
                 break
-        self.switch_player()
 
     def _get_obs(self):
-        # Transform the board into a numerical array for the observation space
-        obs_board = []
+        # Using 1 for 'X' and 2 for 'O' as current player
+        current_player_num = 0 if self.current_player == 'X' else 1
+
+        # Flatten the board into a 1D array and prepend the current player
+        flat_board = [current_player_num]
         for row in self.board:
-            obs_row = []
             for cell in row:
                 if cell == ' ':
-                    obs_row.append(0)
+                    flat_board.append(0)
                 elif cell == 'X':
-                    obs_row.append(1)
+                    flat_board.append(1)
                 else:  # 'O'
-                    obs_row.append(2)
-            obs_board.append(obs_row)
+                    flat_board.append(2)
 
-        # Add current player index to the state
-        current_player_index = 0 if self.current_player == 'X' else 1
-        return {"board": obs_board, "current_player_index": current_player_index}
+        return flat_board
 
     def _is_valid_action(self, action):
         return self.board[0][action] == ' ' 
@@ -178,7 +170,7 @@ def play_game(env):
         if done:
             env.render()
             if reward == 1:
-                print(f"Player {env.current_player} wins!")
+                print(f"Player {env.winner} wins!")  # Use env.winner to announce the winner
             else:
                 print("Game over!")
 

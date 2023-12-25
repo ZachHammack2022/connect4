@@ -25,14 +25,16 @@ def make_move(move: Move):
     if not game._is_valid_action(move.column):
         raise HTTPException(status_code=400, detail="Invalid action, column full.")
     if game.terminated:
-        return {"board": game._get_obs(), "reward": 0, "done": True, "winner": game.winner}
+        return {"board": game._get_obs()[1:], "reward": 0, "done": True, "winner": game.winner}
     _, reward, terminated, _ = game.step(move.column)
-    return {"board": game._get_obs()["board"], "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
+    print(len(game._get_obs()))
+    return {"board": game._get_obs()[1:], "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
 
 @app.post("/reset")
 def reset_game():
-    return game.reset()
+    game.reset()
+    return {"board": game._get_obs()[1:], "current_player": game.current_player}
 
 @app.get("/state")
 def get_state():
-    return {"board": game._get_obs()["board"], "current_player": game.current_player}
+    return {"board": game._get_obs()[1:], "current_player": game.current_player}

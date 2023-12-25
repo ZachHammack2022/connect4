@@ -4,7 +4,7 @@ from torch import nn
 from torch import optim
 import gymnasium as gym
 import numpy as np
-import imageio
+# import imageio
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
@@ -29,13 +29,13 @@ class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
         # Fully connected layers
-        self.fc1 = nn.Linear(6 * 7, 128)  # Flatten the 6x7 grid
+        self.fc1 = nn.Linear(6 * 7 + 1, 128)  # Flatten the 6x7 grid + agent index
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 7)  # 7 actions for the output layer
 
     def forward(self, x):
-        # Reshape and flatten the input
-        x = x.view(x.size(0), -1)  # Flatten the 6x7 grid
+        # Ensure input tensor is properly shaped
+        x = x.view(x.size(0), -1)
         # Forward pass through the network
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -43,34 +43,32 @@ class DQN(nn.Module):
         return x
 
 
-    def forward(self, x):
-        logits = self.linear_relu_stack(x)
-        return logits
-
 model = DQN().to(device)
 
 
 
 # Define the Experience named tuple
-Experience = namedtuple('Experience', ('agent_idx','state', 'action', 'reward', 'next_state', 'done'))
+Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'done'))
 
 class ReplayBuffer:
     def __init__(self, capacity, device):
         self.memory = deque(maxlen=capacity)
         self.device = device
     
-    def push(self,agent_idx, state, action, reward, next_state, done):
-        # Convert to tensors if necessary and send to device
-   
-        if not isinstance(action, torch.Tensor):
-            action = torch.tensor([action], device=self.device)
-        if not isinstance(reward, torch.Tensor):
-            reward = torch.tensor([reward], dtype=torch.float, device=self.device)
-        if not isinstance(done, torch.Tensor):
-            done = torch.tensor([done], dtype=torch.float, device=self.device)
+    def push(self, state, action, reward, next_state, done):
+        
+    
+        # Convert action, reward, and done to tensors if they are not already, directly on the device
+        state = torch.tensor([state], dtype=torch.int64, device=self.device) if not isinstance(state, torch.Tensor) else state.to(self.device)
+        action = torch.tensor([action], dtype=torch.int64, device=self.device) if not isinstance(action, torch.Tensor) else action.to(self.device)
+        reward = torch.tensor([reward], dtype=torch.float, device=self.device) if not isinstance(reward, torch.Tensor) else reward.to(self.device)
+        next_state = torch.tensor([next_state], dtype=torch.int64, device=self.device) if not isinstance(next_state, torch.Tensor) else next_state.to(self.device)
+        done = torch.tensor([done], dtype=torch.float, device=self.device) if not isinstance(done, torch.Tensor) else done.to(self.device)
 
-        e = Experience(agent_idx, state, action, reward, next_state, done)
+        # Create an experience tuple and append it to the memory
+        e = Experience(state, action, reward, next_state, done)
         self.memory.append(e)
+
 
     def sample(self, batch_size):
         experiences = random.sample(self.memory, min(batch_size, len(self.memory)))
@@ -78,11 +76,11 @@ class ReplayBuffer:
         # Use zip(*) to unzip the experiences into separate lists
         states, actions, rewards, next_states, dones = map(torch.stack, zip(*experiences))
 
-        # Ensure all tensors are on the correct device
-        return (item.to(self.device) for item in (states, actions, rewards, next_states, dones))
-    
+        # Ensure all tensors are on the correct device and return as a tuple
+        return tuple(item.to(self.device) for item in (states, actions, rewards, next_states, dones))
+
 class QLearningAgent(object):
-    def __init__(self,lr,batch_size,buffer_size,idx):
+    def __init__(self,lr,batch_size,buffer_size):
 
         self.name = "dqn"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -103,33 +101,31 @@ class QLearningAgent(object):
         self.epsilon_final = 0.01
         self.epsilon_decay = 0.99999  # or any other factor
         self.epsilon=self.epsilon_start
-        self.idx=idx
-        self.mdp=None
     
-    def reset(self):
-        self.idx = None
-        self.mdp = None
     
-    def get_agent_index(self):
-        return self.idx
 
-    def set_agent_index(self, index):
-        self.idx = index
-
-    def set_mdp(self,mdp):
-        self.mdp = mdp
-
-    def find_greedy_action(self, state:torch.Tensor) -> int:
+    def find_greedy_action(self, agent_idx, state) -> int:
         self.model.eval()  # Set the model to evaluation mode
-        action = torch.argmax(self.model(state.unsqueeze(0))).item()
-        self.model.train() 
+
+        # Flatten the 2D state array and convert it to a tensor
+        state_tensor = torch.tensor(state, dtype=torch.float32).flatten()
+
+        # Convert agent_idx to a tensor and append it to the state tensor
+        agent_idx_tensor = torch.tensor([agent_idx], dtype=torch.float32)
+        combined_state = torch.cat((state_tensor, agent_idx_tensor), 0)
+
+        # Pass the combined state tensor to the model and find the action
+        action = torch.argmax(self.model(combined_state.unsqueeze(0))).item()
+
+        self.model.train()
         return int(action)
+
     
-    def find_action(self, state: torch.Tensor) -> int:
+    def find_action(self, turn_idx,state) -> int:
         if (np.random.uniform(0,1) < self.epsilon):
             action = np.random.randint(self.num_actions)
         else: 
-            action = self.find_greedy_action(state=state)
+            action = self.find_greedy_action(turn_idx,state)
     
         return action
     
@@ -141,13 +137,26 @@ class QLearningAgent(object):
         
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
         
+        rewards = rewards.squeeze()  # Reshape from [32, 1] to [32]
+        dones = dones.squeeze()  # Reshape from [32, 1] to [32]
+    
+        
+
         q_values = self.model(states)
-        taken_q_values = q_values.gather(1, actions.unsqueeze(-1)).squeeze(-1)
+        # print(q_values)
+        
+        
+     
+        taken_q_values = q_values.gather(1, actions).squeeze(-1)
         
         doness = dones 
         next_q_values = torch.max(self.target_model(next_states), dim=1).values
+        # print(f"next_q_values shape: {next_q_values.shape}")
+
         true_values = rewards + self.gamma * next_q_values * (1 - doness)
         
+        # Add a line to print shapes for debugging
+        # print(f"Shapes - taken_q_values: {taken_q_values.shape}, true_values: {true_values.shape}")
         loss = self.loss_fn(taken_q_values, true_values)
         
         loss.backward()
@@ -158,10 +167,10 @@ class QLearningAgent(object):
         return model
     
     
-    def save_model_weights(self, folder_name,idx, path='model_weights.pth'):
+    def save_model_weights(self, folder_name, path='model_weights.pth'):
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
-        save_path = os.path.join(folder_name,f"{idx}{path}")
+        save_path = os.path.join(folder_name,f"{path}")
         torch.save(self.model.state_dict(), save_path)
 
     def load_model_weights(self, path):

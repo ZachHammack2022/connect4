@@ -9,7 +9,7 @@ const GameBoard: React.FC = () => {
   const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
 
   interface MoveSuccessResponse {
-    board: number[];
+    board: number[]; // Updated to a single array
     current_player: string;
     done: boolean;
     winner?: string;
@@ -18,10 +18,18 @@ const GameBoard: React.FC = () => {
   interface MoveErrorResponse {
     error: string;
   }
+
+  const updateGameBoard = (flatBoard: number[]) => {
+    const board2D = [];
+    for (let row = 0; row < 6; row++) {
+      board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
+    }
+    setBoard(board2D);
+  };
   
   const fetchGameState = async () => {
     const response = await axios.get('/state');
-    updateGameBoard(response.data.board);
+    updateGameBoard(response.data.board); // Updated to use updateGameBoard
     setCurrentPlayer(response.data.current_player);
   };
 
@@ -30,38 +38,32 @@ const GameBoard: React.FC = () => {
   };
 
   const handleColumnClick = async (column: number) => {
-    if (isColumnFull(column) ) {
+    if (isColumnFull(column)) {
       alert("This column is full. Try a different one.");
       return;
     }
     if (gameOver) {
-        alert("The game is over. Reset the game to play again.");
-        return;
-      }
-
+      alert("The game is over. Reset the game to play again.");
+      return;
+    }
 
     try {
       const response = await axios.post<MoveSuccessResponse>('/move', { column });
-      updateGameBoard(response.data.board);
+      updateGameBoard(response.data.board); // Updated to use updateGameBoard
       setCurrentPlayer(response.data.current_player);
       if (response.data.done) {
         setGameOver(true);
         setWinner(response.data.winner || null);
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const errorData = error.response.data as MoveErrorResponse;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as MoveErrorResponse;
         alert(errorData.error);
+      } else {
+        // Handle non-Axios errors, or if error is not an instance of AxiosError
+        console.error("An unexpected error occurred:", error);
       }
     }
-  };
-
-  const updateGameBoard = (flatBoard: number[]) => {
-    const board2D = [];
-    for (let row = 0; row < 6; row++) {
-      board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
-    }
-    setBoard(board2D);
   };
 
   const handleKeyDown = async (event: React.KeyboardEvent, column: number) => {
@@ -72,11 +74,10 @@ const GameBoard: React.FC = () => {
 
   const resetGame = async () => {
     const response = await axios.post('/reset');
-    updateGameBoard(response.data.board);
+    updateGameBoard(response.data.board); // Updated to use updateGameBoard
     setCurrentPlayer(response.data.current_player);
     setGameOver(false);
     setWinner(null);
-    fetchGameState();
   };
 
   const handleMouseEnter = (columnIndex: number) => {
