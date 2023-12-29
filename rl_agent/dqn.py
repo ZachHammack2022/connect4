@@ -26,22 +26,45 @@ device = (
 print(f"Using {device} device")
 
 class DQN(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout_rate=0.1):
         super(DQN, self).__init__()
+        # Convolutional layers
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        
+        # Dropout layer
+        self.dropout = nn.Dropout(dropout_rate)
+        
         # Fully connected layers
-        self.fc1 = nn.Linear(43, 128)  # Flatten the 6x7 grid + agent index
+        self.fc1 = nn.Linear(64 * 6 * 7, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 7)  # 7 actions for the output layer
 
     def forward(self, x):
-        # Ensure input tensor is properly shaped
-        x = x.float()
-        x = x.view(x.size(0), -1)
-        # Forward pass through the network
+        # Ensure input tensor is properly shaped for 2D convolution
+        # Reshape from [batch_size, 1, 42] to [batch_size, 1, 6, 7]
+        x = x.float().view(-1, 1, 6, 7)
+
+        # Forward pass through 2D convolutional layers
+        x = F.relu(self.conv1(x))  # Output shape [batch_size, 16, 6, 7]
+        x = F.relu(self.conv2(x))  # Output shape [batch_size, 32, 6, 7]
+        x = F.relu(self.conv3(x))  # Output shape [batch_size, 64, 6, 7]
+
+        # Flatten the tensor for fully connected layers
+        x = x.view(x.size(0), -1)  # Flatten to [batch_size, 64*6*7]
+
+        # Forward pass through fully connected layers
         x = F.relu(self.fc1(x))
+        x = self.dropout(x)
         x = F.relu(self.fc2(x))
+        x = self.dropout(x)
         x = self.fc3(x)
         return x
+
+
+
+
 
 
 model = DQN().to(device)
@@ -86,7 +109,7 @@ class QLearningAgent(object):
         self.name = "dqn"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.gamma = 0.99
-        self.num_actions = 6
+        self.num_actions = 7
         self.model = self.create_model().to(self.device)
         self.target_model = DQN().to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
@@ -100,7 +123,7 @@ class QLearningAgent(object):
         self.batch_size = batch_size
         self.epsilon_start = 1.0
         self.epsilon_final = 0.01
-        self.epsilon_decay = 0.99999  # or any other factor
+        self.epsilon_decay = 0.999995  # or any other factor
         self.epsilon=self.epsilon_start
     
     
@@ -139,15 +162,11 @@ class QLearningAgent(object):
         
 
         q_values = self.model(states)
-        # print(q_values)
-        
-        
      
         taken_q_values = q_values.gather(1, actions).squeeze(-1)
         
         doness = dones 
         next_q_values = torch.max(self.target_model(next_states), dim=1).values
-        # print(f"next_q_values shape: {next_q_values.shape}")
 
         true_values = rewards + self.gamma * next_q_values * (1 - doness)
         
@@ -163,13 +182,14 @@ class QLearningAgent(object):
         return model
     
     
-    def save_model_weights(self, folder_name, path='model_weights.pth'):
+    def save_model_weights(self, folder_name,index, path='model_weights.pth'):
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
-        save_path = os.path.join(folder_name,f"{path}")
+        save_path = os.path.join(folder_name,f"{index}{path}")
         torch.save(self.model.state_dict(), save_path)
 
-    def load_model_weights(self, path):
-        model_weights = torch.load(path)
+    def load_model_weights(self,index,path):
+        load_path = f"{index}{path}"
+        model_weights = torch.load(load_path)
         self.model.load_state_dict(model_weights)
         self.model.eval()

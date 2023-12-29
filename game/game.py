@@ -8,12 +8,16 @@ class Connect4Env(gym.Env):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
         self.action_space = spaces.Discrete(7)  # 7 columns
-        self.observation_space = spaces.Box(low=0, high=2, shape=(43,), dtype=int)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
+        self.mode = "human" # human or computer
     
     def seed(self, seed=None):
         random.seed(seed)
+    
+    def set_mode(self,mode):
+        self.mode = mode
 
     def step(self, action):
         # Check if action is valid
@@ -29,11 +33,14 @@ class Connect4Env(gym.Env):
         if won:
             self.winner = self.current_player
             self.terminated = True
-            reward = 1
+            reward = 100
         else:
             self.terminated = self._is_board_full()
-            reward = 0
-            self.switch_player()  # Switch player only if no win
+            if self.terminated:
+                reward = 10
+            else:
+                reward = 0.01
+                self.switch_player()  # Switch player only if no win
 
         return self._get_obs(), reward, self.terminated, {}
 
@@ -64,18 +71,18 @@ class Connect4Env(gym.Env):
 
     def _get_obs(self):
         # Using 1 for 'X' and 2 for 'O' as current player
-        current_player_num = 0 if self.current_player == 'X' else 1
+        # current_player_num = 0 if self.current_player == 'X' else 1
 
         # Flatten the board into a 1D array and prepend the current player
-        flat_board = [current_player_num]
+        flat_board = []
         for row in self.board:
             for cell in row:
                 if cell == ' ':
                     flat_board.append(0)
                 elif cell == 'X':
-                    flat_board.append(1)
+                    flat_board.append(0.5)
                 else:  # 'O'
-                    flat_board.append(2)
+                    flat_board.append(1)
 
         return flat_board
 

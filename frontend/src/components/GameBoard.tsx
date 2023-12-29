@@ -7,6 +7,8 @@ const GameBoard: React.FC = () => {
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<string | null>(null);
   const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
+  const [mode, setMode] = useState<string>("human") // 'human' or 'computer'
+
 
   interface MoveSuccessResponse {
     board: number[];
@@ -18,6 +20,21 @@ const GameBoard: React.FC = () => {
   interface MoveErrorResponse {
     error: string;
   }
+
+  const handlePlayComputer = async () => {
+    await axios.post('/set_mode', { mode: 'computer' });
+    setMode('computer');
+  };
+  
+  const handlePlayHuman = async () => {
+    await axios.post('/set_mode', { mode: 'human' });
+    setMode('human');
+  };
+
+  const highlightedStyle = {
+    border: '2px solid blue',
+    backgroundColor: 'lightblue',
+  };
   
   const fetchGameState = async () => {
     const response = await axios.get('/state');
@@ -87,10 +104,19 @@ const GameBoard: React.FC = () => {
   };
 
   const getColumnStyle = (columnIndex: number, cell: number) => {
+    let backgroundColor;
+    if (cell === 0) {
+      backgroundColor = hoveredColumn === columnIndex ? '#e0e0e0' : 'white'; // Empty cell
+    } else if (cell === 0.5) {
+      backgroundColor = 'red'; // Player X
+    } else {
+      backgroundColor = 'yellow'; // Player O
+    }
+  
     return {
       width: 50,
       height: 50,
-      backgroundColor: hoveredColumn === columnIndex && cell === 0 ? '#e0e0e0' : cell === 0 ? 'white' : cell === 1 ? 'red' : 'yellow',
+      backgroundColor: backgroundColor,
       border: '1px solid black',
       display: 'flex',
       justifyContent: 'center',
@@ -105,27 +131,42 @@ const GameBoard: React.FC = () => {
 
   return (
     <div>
-      {board && board.length > 0 && board.map((row, rowIndex) => (
+        {board && board.length > 0 && board.map((row, rowIndex) => (
         <div key={rowIndex} style={{ display: 'flex' }}>
-          {row.map((cell, columnIndex) => (
+            {row.map((cell, columnIndex) => (
             <div 
-              key={columnIndex}
-              tabIndex={0}
-              onClick={() => handleColumnClick(columnIndex)}
-              onKeyDown={(event) => handleKeyDown(event, columnIndex)}
-              onMouseEnter={() => handleMouseEnter(columnIndex)}
-              onMouseLeave={handleMouseLeave}
-              style={getColumnStyle(columnIndex, cell)}
-              aria-label={`Column ${columnIndex}`}
+                key={`${rowIndex}-${columnIndex}`}
+                tabIndex={0}
+                onClick={() => handleColumnClick(columnIndex)}
+                onKeyDown={(event) => handleKeyDown(event, columnIndex)}
+                onMouseEnter={() => handleMouseEnter(columnIndex)}
+                onMouseLeave={handleMouseLeave}
+                style={getColumnStyle(columnIndex, cell)}
+                aria-label={`Column ${columnIndex}`}
             >
-              {cell !== 0 && (cell === 1 ? 'X' : 'O')}
+                {cell !== 0 && (cell === 0.5 ? 'X' : 'O')}
             </div>
-          ))}
+            ))}
         </div>
-      ))}
+        ))}
+
       {!gameOver && <p>Current Player: {currentPlayer}</p>}
       {gameOver && (winner ? <p>Winner: {winner}</p> : <p>Game Over!</p>)}
       <button onClick={resetGame}>Reset Game</button>
+      <button
+        onClick={handlePlayHuman}
+        style={mode === 'human' ? highlightedStyle : {}}
+      >
+        Play Human
+      </button>
+
+      <button
+        onClick={handlePlayComputer}
+        style={mode === 'computer' ? highlightedStyle : {}}
+      >
+        Play Computer
+      </button>
+
     </div>
   );
 };
