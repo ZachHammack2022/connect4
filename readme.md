@@ -1,7 +1,7 @@
 # Connect4 Game Application
 
 ## Overview
-This Connect4 application is a full-stack web application built using React, TypeScript, and Axios for API calls. It is containerized using Docker and Docker Compose, making it easy to run and deploy. The game aims to replicate the classic Connect4 experience with additional features, including various AI opponents and a leaderboard system.
+This Connect4 application is a full-stack web application built using React, TypeScript, and Python. It is containerized using Docker and Docker Compose, making it easy to run and deploy. The game aims to replicate the classic Connect4 experience with additional features, including various AI opponents and a leaderboard system.
 
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
@@ -11,10 +11,11 @@ This Connect4 application is a full-stack web application built using React, Typ
 
 ## Technology Stack
 - **Frontend**: React, TypeScript
-- **Backend**: [Backend technologies]
+- **Backend**: Python
 - **Database**: PostgreSQL
-- **API Calls**: Axios
+- **API Calls**: Axios, FastApi
 - **Containerization**: Docker, Docker Compose
+- **RL Agents**: Pytorch
 
 ## Installation and Running the Application
 
