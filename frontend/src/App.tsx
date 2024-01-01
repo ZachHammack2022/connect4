@@ -176,14 +176,13 @@ function App() {
                   <Leaderboard data={leaderboardData} />
                 </Grid>
             </Grid>
-          <div className='bottom-bar'>
             <BottomNavBar 
               resetGame={resetGame}
               handlePlayHuman={handlePlayHuman}
               handlePlayComputer={handlePlayComputer}
               mode={mode}
             />
-            </div>
+          
          
         </div>
     );

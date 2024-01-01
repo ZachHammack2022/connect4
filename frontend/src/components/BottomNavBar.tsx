@@ -10,7 +10,7 @@ interface BottomNavBarProps {
 
 const BottomNavBar: React.FC<BottomNavBarProps> = ({ resetGame, handlePlayHuman, handlePlayComputer, mode }) => {
     return (
-        <Toolbar>
+        <Toolbar style={{ justifyContent: 'center', gap: '10px' }}>
           <Button variant={"outlined"} color="inherit" onClick={resetGame}>
             Reset Game
           </Button>

@@ -23,8 +23,4 @@
   justify-content: center;
 }
 
-.bottom-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center; /* To center vertically as well */
-}
+
