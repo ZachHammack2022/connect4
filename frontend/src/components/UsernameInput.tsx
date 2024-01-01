@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
+import './UsernameInput.css'
 
 interface UsernameInputProps {
     setUsername: (username: string) => void;
@@ -15,7 +16,7 @@ const UsernameInput: React.FC<UsernameInputProps> = ({ setUsername }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="form-container">
             <TextField label="Username" value={name} onChange={(e) => setName(e.target.value)} />
             <Button type="submit" variant="contained">Submit</Button>
         </form>

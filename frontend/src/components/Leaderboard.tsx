@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,Typography } from '@mui/material';
 
 interface LeaderboardEntry {
     username: string;
@@ -14,7 +14,9 @@ interface LeaderboardProps {
 const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
     return (
         <>
-            <h3>Leaderboard</h3>
+            <Typography variant="h6" component="h3">
+                Leaderboard
+            </Typography>
             <TableContainer component={Paper}>
                 <Table aria-label="leaderboard table">
                     <TableHead>
@@ -25,7 +27,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {data.map((entry, index) => (
+                        {data.slice(0, 4).map((entry, index) => (
                             <TableRow key={index}>
                                 <TableCell component="th" scope="row">
                                     {entry.username}
@@ -40,5 +42,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
         </>
     );
 };
+
 
 export default Leaderboard;

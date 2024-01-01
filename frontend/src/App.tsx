@@ -5,6 +5,8 @@ import Leaderboard from './components/Leaderboard';
 import GameBoard from './components/GameBoard'; // Your existing GameBoard component
 import BottomNavBar from './components/BottomNavBar';
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import axios from 'axios';
 import "./App.css"
 // Use environment variable for the Axios base URL
@@ -159,8 +161,9 @@ function App() {
     return (
         <div className="App">
             <Navbar />
+            <hr></hr>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} className="gameboard-padding">
+                <Grid item xs={12} sm={5} className="gameboard-padding">
                     {!username && <UsernameInput setUsername={setUsername} />}
                     {username && (
                       <GameBoard 
@@ -172,7 +175,15 @@ function App() {
                       />
                     )}
                 </Grid>
-                <Grid item xs={12} sm={6} className="leaderboard-padding">
+                <Grid item xs={12} sm={2} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <Button variant="contained">DQN</Button>
+                      <Button variant="contained">MCTS</Button>
+                      <Button variant="contained">Human</Button>
+                  </Box>
+              </Grid>
+
+                <Grid item xs={12} sm={5} className="leaderboard-padding">
                   <Leaderboard data={leaderboardData} />
                 </Grid>
             </Grid>

@@ -1,5 +1,3 @@
-/* App.css */
-
 .App {
   text-align: center;
   font-family: 'Arial', sans-serif;
@@ -10,17 +8,14 @@
 }
 
 .gameboard-padding {
-  padding-top: 20px;
   display: flex;
   justify-content: center; 
   align-items: center;
 }
 
-
 .leaderboard-padding {
-  padding-top: 20px;
   padding-right: 20px;
-  justify-content: center;
+  padding-left: 20px;
 }
 
 

@@ -15,15 +15,15 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ resetGame, handlePlayHuman,
             Reset Game
           </Button>
           <Button 
-            variant={mode === 'human' ? "contained" : "outlined"} 
-            color={mode === 'human' ? "inherit" : "secondary"} 
+            variant="contained"
+            color={mode === 'human' ? "primary" : "inherit"} 
             onClick={handlePlayHuman}
           >
             Play Human
           </Button>
           <Button 
-            variant={mode === 'computer' ? "contained" : "outlined"} 
-            color={mode === 'computer' ? "inherit" : "secondary"} 
+            variant="contained"
+            color={mode === 'computer' ? "primary" : "inherit"} 
             onClick={handlePlayComputer}
           >
             Play Computer

@@ -1,0 +1,7 @@
+/* UsernameInput.css */
+
+.form-container {
+    display: flex;
+    align-items: center; /* This aligns items vertically */
+    gap: 10px; /* Optional: Adds space between the input and button */
+}
