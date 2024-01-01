@@ -10,7 +10,7 @@ COPY frontend/package*.json ./
 # Install dependencies
 RUN npm install
 
-#idk why
+# idk why
 RUN npm install axios 
 
 # Copy the frontend source code

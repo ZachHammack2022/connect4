@@ -10,7 +10,9 @@ setup(
         'pipdeptree==2.13.1',
         'Shimmy==1.3.0',
         'stable-baselines3==2.2.1',
-        'uvicorn==0.25.0'
+        'uvicorn==0.25.0',
+        'databases==0.8.0',
+        'asyncpg==0.29.0',
     ]
 )
 

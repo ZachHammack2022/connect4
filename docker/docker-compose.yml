@@ -15,6 +15,7 @@ services:
 
     environment:
       - REACT_APP_API_BASE_URL=http://backend:8000
+      - DATABASE_URL=postgresql://user:password@postgres:5432/mydatabase
 
 
   frontend:
@@ -26,5 +27,17 @@ services:
       - "3000:3000"
     command: ["serve", "-s", "build", "-l", "3000"]
     volumes:
-      - /Users/zhammack/Downloads/cs/connect4/frontend:/app/frontend
-      - /app/frontend/node_modules
+      - /Users/zhammack/Downloads/cs/connect4/frontend/src:/app/frontend/src
+      - /Users/zhammack/Downloads/cs/connect4/frontend/node_modules:/app/frontend/node_modules
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
