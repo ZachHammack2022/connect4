@@ -4,9 +4,8 @@ import UsernameInput from './components/UsernameInput';
 import Leaderboard from './components/Leaderboard';
 import GameBoard from './components/GameBoard'; // Your existing GameBoard component
 import BottomNavBar from './components/BottomNavBar';
+import ModeButtonGroup from './components/ModeButtonGroup';
 import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import axios from 'axios';
 import "./App.css"
 // Use environment variable for the Axios base URL
@@ -45,14 +44,25 @@ function App() {
       }
     };
 
-    const handlePlayComputer = async () => {
-      await axios.post('/set_mode', { mode: 'computer' });
-      setMode('computer');
-    };
     
+    const handlePlayDQN = async () => {
+      await axios.post('/set_mode', { mode: 'DQN' });
+      setMode('DQN');
+  };
+
+    const handlePlayMCTS = async () => {
+        await axios.post('/set_mode', { mode: 'MCTS' });
+        setMode('MCTS');
+    };
+
     const handlePlayHuman = async () => {
-      await axios.post('/set_mode', { mode: 'human' });
-      setMode('human');
+        await axios.post('/set_mode', { mode: 'human' });
+        setMode('human');
+    };
+
+    const handlePlayRandom = async () => {
+        await axios.post('/set_mode', { mode: 'random' });
+        setMode('random');
     };
     
 
@@ -158,6 +168,13 @@ function App() {
       fetchGameState();
     }, []); // Fetch game state when component mounts
 
+    const buttons = [
+      { label: 'DQN', mode: 'DQN', onClick: handlePlayDQN },
+      { label: 'MCTS', mode: 'MCTS', onClick: handlePlayMCTS },
+      { label: 'Human', mode: 'human', onClick: handlePlayHuman },
+      { label: 'Random', mode: 'random', onClick: handlePlayRandom }
+  ];
+
     return (
         <div className="App">
             <Navbar />
@@ -175,12 +192,9 @@ function App() {
                       />
                     )}
                 </Grid>
-                <Grid item xs={12} sm={2} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <Box style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <Button variant="contained">DQN</Button>
-                      <Button variant="contained">MCTS</Button>
-                      <Button variant="contained">Human</Button>
-                  </Box>
+
+              <Grid item xs={12} sm={2} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <ModeButtonGroup buttons={buttons} currentMode={mode} />
               </Grid>
 
                 <Grid item xs={12} sm={5} className="leaderboard-padding">
@@ -190,7 +204,6 @@ function App() {
             <BottomNavBar 
               resetGame={resetGame}
               handlePlayHuman={handlePlayHuman}
-              handlePlayComputer={handlePlayComputer}
               mode={mode}
             />
           
