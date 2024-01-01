@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
+import React from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 
 interface LeaderboardEntry {
     username: string;
@@ -9,25 +7,36 @@ interface LeaderboardEntry {
     losses: number;
 }
 
-const Leaderboard: React.FC = () => {
-    const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+interface LeaderboardProps {
+    data: LeaderboardEntry[];
+}
 
-    useEffect(() => {
-        axios.get('http://backend:8000/leaderboard')
-            .then(response => setLeaderboardData(response.data))
-            .catch(error => console.error('Error fetching leaderboard data:', error));
-    }, []);
-
+const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
     return (
         <>
             <h3>Leaderboard</h3>
-            <List>
-                {leaderboardData.map((entry, index) => (
-                    <ListItem key={index}>
-                        {entry.username}: {entry.wins} wins, {entry.losses} losses
-                    </ListItem>
-                ))}
-            </List>
+            <TableContainer component={Paper}>
+                <Table aria-label="leaderboard table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Username</TableCell>
+                            <TableCell align="right">Wins</TableCell>
+                            <TableCell align="right">Losses</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {data.map((entry, index) => (
+                            <TableRow key={index}>
+                                <TableCell component="th" scope="row">
+                                    {entry.username}
+                                </TableCell>
+                                <TableCell align="right">{entry.wins}</TableCell>
+                                <TableCell align="right">{entry.losses}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </>
     );
 };
