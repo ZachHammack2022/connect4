@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 app = FastAPI()
 game = Connect4Env()
+print(game._get_obs)
 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -38,6 +39,7 @@ def make_move(move: Move):
 @app.post("/reset")
 def reset_game():
     game.reset()
+    print(game._get_obs())
     return {"board": game._get_obs(), "current_player": game.current_player}
 
 @app.get("/state")

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+// Use environment variable for the Axios base URL
+const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+axios.defaults.baseURL = baseURL;
 
 const GameBoard: React.FC = () => {
   const [board, setBoard] = useState<number[][]>([]);
@@ -37,9 +40,17 @@ const GameBoard: React.FC = () => {
   };
   
   const fetchGameState = async () => {
-    const response = await axios.get('/state');
-    updateGameBoard(response.data.board);
-    setCurrentPlayer(response.data.current_player);
+    try {
+        const response = await axios.get('/state');
+        console.log("Full response:", response);
+        console.log("Board data:", response.data.board);
+        updateGameBoard(response.data.board);
+        setCurrentPlayer(response.data.current_player);
+    } catch (error) {
+        console.error("Error while fetching game state:", error);
+        // Handle the error appropriately
+        // For example, you could set an error state, show a notification to the user, etc.
+      }
   };
 
   const isColumnFull = (column: number) => {
@@ -58,6 +69,8 @@ const GameBoard: React.FC = () => {
 
     try {
       const response = await axios.post<MoveSuccessResponse>('/move', { column });
+      
+      console.log("board after column click: ", response.data.board)
       updateGameBoard(response.data.board);
       setCurrentPlayer(response.data.current_player);
       if (response.data.done) {
@@ -73,6 +86,7 @@ const GameBoard: React.FC = () => {
   };
 
   const updateGameBoard = (flatBoard: number[]) => {
+    console.log("board: ",flatBoard)
     const board2D = [];
     for (let row = 0; row < 6; row++) {
       board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
@@ -87,13 +101,21 @@ const GameBoard: React.FC = () => {
   };
 
   const resetGame = async () => {
-    const response = await axios.post('/reset');
-    updateGameBoard(response.data.board);
-    setCurrentPlayer(response.data.current_player);
-    setGameOver(false);
-    setWinner(null);
-    fetchGameState();
+    try {
+      const response = await axios.post('/reset');
+      console.log("board after reset: ", response.data.board)
+      updateGameBoard(response.data.board);
+      setCurrentPlayer(response.data.current_player);
+      setGameOver(false);
+      setWinner(null);
+      fetchGameState();
+    } catch (error) {
+      console.error("Error during reset game:", error);
+      // Handle the error appropriately
+      // For example, you could set an error state, show a notification to the user, etc.
+    }
   };
+  
 
   const handleMouseEnter = (columnIndex: number) => {
     setHoveredColumn(columnIndex);

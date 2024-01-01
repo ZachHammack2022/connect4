@@ -2,17 +2,29 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    image: backend
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
     ports:
       - "8000:8000"
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
     volumes:
-      - ./backend:/app
+      - /Users/zhammack/Downloads/cs/connect4/backend:/app/backend
+      - /Users/zhammack/Downloads/cs/connect4/game:/app/game
+
     environment:
-      - SOME_ENV_VAR=value
+      - REACT_APP_API_BASE_URL=http://backend:8000
+
 
   frontend:
-    image: nginx:alpine
-    volumes:
-      - ./frontend/build/:ro
+    image: frontend
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
     ports:
-      - "80:80"
+      - "3000:3000"
+    command: ["serve", "-s", "build", "-l", "3000"]
+    volumes:
+      - /Users/zhammack/Downloads/cs/connect4/frontend:/app/frontend
+      - /app/frontend/node_modules
