@@ -7,8 +7,8 @@ This Connect4 application is a full-stack web application built using React, Typ
 
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
-- **AI Opponents**: Includes several trained Deep Q-Network (DQN) agents, with ongoing improvements and additions such as Monte Carlo Tree Search (MCTS) agents and Minimax with Alpha-Beta Pruning agents.
-- **Player Choice**: Players can choose to play against random agents, DQN, MCTS, Minimax with Alpha-Beta Pruning agents, or another human in a 1v1 match.
+- **AI Opponents**: Includes trained Deep Q-Network (DQN) agents, with ongoing improvements and additions such as Monte Carlo Tree Search (MCTS) agents and Minimax with Alpha-Beta Pruning agents.
+- **Player Choice**: Players can choose to play against random agents, DQN, MCTS, Minimax with Alpha-Beta Pruning agents, or another human in a 1v1 match. 
 - **Leaderboard**: A leaderboard that will track and display player rankings. Leaderboard per opponent type coming soon.
 
 ## Technology Stack

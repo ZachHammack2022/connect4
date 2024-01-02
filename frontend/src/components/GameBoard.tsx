@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import ModeButtonGroup from './ModeButtonGroup';
 import UnderGameBar from './UnderGameBar'
 import { LeanModeButtonProps } from './ModeButtonGroup';
- import Grid from '@mui/material/Grid';
- import { Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { Typography } from '@mui/material';
 
 interface GameBoardProps {
     board: number[][];

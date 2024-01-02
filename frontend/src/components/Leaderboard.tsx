@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,Typography } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 
 interface LeaderboardEntry {
     username: string;
@@ -12,6 +12,11 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
+    const calculateWinPercentage = (wins: number, losses: number) => {
+        const totalGames = wins + losses;
+        return totalGames > 0 ? ((wins / totalGames) * 100).toFixed(2) + '%' : 'N/A';
+    };
+
     return (
         <>
             <Typography variant="h6" component="h3">
@@ -24,6 +29,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
                             <TableCell>Username</TableCell>
                             <TableCell align="right">Wins</TableCell>
                             <TableCell align="right">Losses</TableCell>
+                            <TableCell align="right">Win %</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -34,6 +40,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
                                 </TableCell>
                                 <TableCell align="right">{entry.wins}</TableCell>
                                 <TableCell align="right">{entry.losses}</TableCell>
+                                <TableCell align="right">
+                                    {calculateWinPercentage(entry.wins, entry.losses)}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -43,5 +52,5 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
     );
 };
 
-
 export default Leaderboard;
+
