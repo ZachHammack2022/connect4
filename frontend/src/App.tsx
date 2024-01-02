@@ -20,21 +20,22 @@ function App() {
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
     const [mode, setMode] = useState<string>("human") // 'human' or 'computer'
-    const [leaderboardData, setLeaderboardData] = useState([]);
+    const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
     
 
 
+    interface LeaderboardEntry {
+      username: string;
+      wins: number;
+      losses: number;
+  }
 
     interface MoveSuccessResponse {
       board: number[];
       current_player: string;
       done: boolean;
       winner?: string;
-    }
-    
-    interface MoveErrorResponse {
-      error: string;
     }
 
     function isAxiosError(error: unknown): error is AxiosError {
@@ -53,8 +54,8 @@ function App() {
       } catch (error) {
         if (isAxiosError(error)) {
             // Now TypeScript knows this is an AxiosError
-            const message = (error.response?.data as ErrorResponse).message || "An unknown error occurred";
-            setError(message);
+            const message = (error.response?.data as ErrorResponse).message || "Failed to fetch leaderboard. Check database.";
+            setError(`Error while fetching leaderboard: ${message}`);
         } else {
             // Handle non-Axios errors
             setError("An unknown error occurred");
@@ -97,9 +98,7 @@ function App() {
           updateGameBoard(response.data.board);
           setCurrentPlayer(response.data.current_player);
       } catch (error) {
-          console.error("Error while fetching game state:", error);
-          // Handle the error appropriately
-          // For example, you could set an error state, show a notification to the user, etc.
+          setError(`Error while fetching game state: ${error}`);
         }
     };
 
@@ -115,22 +114,18 @@ function App() {
           console.log("posted game result and fetched leaderboard")
         } catch (error) {
           console.error("Error while submitting game result:", error);
-          // Handle the error appropriately
+          setError(`Error while submitting game result:${error}`)
         }
       }
     };
      
-
-
-
-
     const handleColumnClick = async (column: number) => {
       if (isColumnFull(column) ) {
-        alert("This column is full. Try a different one.");
+        setError("This column is full. Try a different one.");
         return;
       }
       if (gameOver) {
-          alert("The game is over. Reset the game to play again.");
+          setError("The game is over. Reset the game to play again.");
           return;
         }
 
@@ -149,12 +144,16 @@ function App() {
           
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-          const errorData = error.response.data as MoveErrorResponse;
-          alert(errorData.error);
-        }
+        if (isAxiosError(error)) {
+          // Now TypeScript knows this is an AxiosError
+          const message = (error.response?.data as ErrorResponse).message || "Failed to fetch leaderboard. Check database.";
+          setError(`Error while making a move:${message}`)
+      } else {
+          // Handle non-Axios errors
+          setError("Error while making a move");
       }
-    };
+    }
+  };
 
     const updateGameBoard = (flatBoard: number[]) => {
       console.log("board: ",flatBoard)
@@ -176,19 +175,22 @@ function App() {
         setWinner(null);
         fetchGameState();
       } catch (error) {
-        console.error("Error during reset game:", error);
-        // Handle the error appropriately
-        // For example, you could set an error state, show a notification to the user, etc.
+        if (isAxiosError(error)) {
+          // Now TypeScript knows this is an AxiosError
+          const message = (error.response?.data as ErrorResponse).message || "Failed to fetch leaderboard. Check database.";
+          setError(`Error while resetting game:${message}`)
+      } else {
+          // Handle non-Axios errors
+          setError("Error while resetting game");
       }
-    };
-
-    useEffect(() => {
+    }
+  }
+  // This runs once on component mount
+  useEffect(() => {
       fetchLeaderboard();
-    }, []); // Fetch leaderboard when component mounts
-
-    useEffect(() => {
       fetchGameState();
-    }, []); // Fetch game state when component mounts
+  }); 
+
 
     const buttons = [
       { label: 'DQN', mode: 'DQN', onClick: handlePlayDQN },
