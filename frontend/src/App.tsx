@@ -8,6 +8,9 @@ import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import { AxiosError } from 'axios';
 import "./App.css"
+import { ErrorResponse, MoveSuccessResponse,LeaderboardEntry } from './interfaces/interfaces';
+import { useFetchLeaderboard } from './hooks/useApi';
+
 import ErrorPopup from './components/ErrorPopup';
 // Use environment variable for the Axios base URL
 const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -22,48 +25,26 @@ function App() {
     const [mode, setMode] = useState<string>("human") // 'human' or 'computer'
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
-    
-
-
-    interface LeaderboardEntry {
-      username: string;
-      wins: number;
-      losses: number;
-  }
-
-    interface MoveSuccessResponse {
-      board: number[];
-      current_player: string;
-      done: boolean;
-      winner?: string;
-    }
+    const { fetchLeaderboard } = useFetchLeaderboard();
 
     function isAxiosError(error: unknown): error is AxiosError {
       return (error as AxiosError).response !== undefined;
   }
 
-  interface ErrorResponse {
-    message:string;
-  }
-  
-
-    const fetchLeaderboard = async () => {
+  const submitGameResult = async (won: boolean) => {
+    if (username) {
       try {
-        const response = await axios.get('/leaderboard/');
-        setLeaderboardData(response.data);
+        await axios.post('/submit_game/', { username, won });
+        const leaderboard = await fetchLeaderboard();
+        setLeaderboardData(leaderboard)
+        console.log("posted game result and fetched leaderboard")
       } catch (error) {
-        if (isAxiosError(error)) {
-            // Now TypeScript knows this is an AxiosError
-            const message = (error.response?.data as ErrorResponse).message || "Failed to fetch leaderboard. Check database.";
-            setError(`Error while fetching leaderboard: ${message}`);
-        } else {
-            // Handle non-Axios errors
-            setError("An unknown error occurred");
-        }
-        console.error("Error during reset game:", error);
+        console.error("Error while submitting game result:", error);
+        setError(`Error while submitting game result:${error}`)
+      }
     }
-};
-
+  };
+  
     const handleCloseErrorPopup = () => {
       setError(null);
   };
@@ -106,18 +87,7 @@ function App() {
       return board[0][column] !== 0;
     };
 
-    const submitGameResult = async (won: boolean) => {
-      if (username) {
-        try {
-          await axios.post('/submit_game/', { username, won });
-          fetchLeaderboard();
-          console.log("posted game result and fetched leaderboard")
-        } catch (error) {
-          console.error("Error while submitting game result:", error);
-          setError(`Error while submitting game result:${error}`)
-        }
-      }
-    };
+   
      
     const handleColumnClick = async (column: number) => {
       if (isColumnFull(column) ) {
@@ -185,11 +155,20 @@ function App() {
       }
     }
   }
-  // This runs once on component mount
   useEffect(() => {
-      fetchLeaderboard();
-      fetchGameState();
-  }); 
+    const initLeaderboard = async () => {
+        try {
+            const leaderboardData = await fetchLeaderboard();
+            setLeaderboardData(leaderboardData);
+        } catch (error) {
+            setError("Error while fetching leaderboard");
+        }
+    };
+
+    initLeaderboard(); // Call the async function
+    fetchGameState(); // Assuming fetchGameState is another function you want to call on mount
+}, []); // Empty dependency array to run only on component mount
+
 
 
     const buttons = [
