@@ -25,7 +25,16 @@ This Connect4 application is a full-stack web application built using React, Typ
 - Docker and Docker Compose installed on your machine.
 
 ### Running the Application
-To run the application, you can start each service (backend, frontend, PostgreSQL) individually using Docker Compose. Use the following command to start a specific service:
+To run the application, you can navigate to docker folder and run:
 
 ```bash
-docker-compose up <service>
+docker compose up
+```
+Interact with the app by going to 'localhost:3000'.
+
+If you want to run each service individually instead, you can run the following command for each service (frontend,backend,postgres):
+
+```bash
+docker compose up <service>
+```
+
