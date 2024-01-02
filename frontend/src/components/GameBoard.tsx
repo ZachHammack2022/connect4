@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import ModeButtonGroup from './ModeButtonGroup';
+import UnderGameBar from './UnderGameBar'
+import { LeanModeButtonProps } from './ModeButtonGroup';
+ import Grid from '@mui/material/Grid';
 
 interface GameBoardProps {
     board: number[][];
@@ -6,6 +10,9 @@ interface GameBoardProps {
     gameOver: boolean;
     winner: string | null;
     handleColumnClick: (column: number) => Promise<void>;
+    buttons: LeanModeButtonProps[];
+    currentMode: string;
+    resetGame: () => Promise<void>;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -14,6 +21,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
     gameOver,
     winner,
     handleColumnClick,
+    buttons,
+    currentMode,
+    resetGame
 }) => {
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
     const getColumnStyle = (columnIndex: number, cell: number): React.CSSProperties => {
@@ -53,30 +63,43 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
 
 
-    return (
-        <div>
-            {board.map((row, rowIndex) => (
-                <div key={rowIndex} style={{ display: 'flex' }}>
-                    {row.map((cell, columnIndex) => (
-                        <div 
-                            key={`${rowIndex}-${columnIndex}`}
-                            tabIndex={0}
-                            onClick={() => handleColumnClick(columnIndex)}
-                            onKeyDown={(event) => handleKeyDown(event, columnIndex)}
-                            onMouseEnter={() => handleMouseEnter(columnIndex)}
-                            onMouseLeave={handleMouseLeave}
-                            style={getColumnStyle(columnIndex, cell)}
-                            aria-label={`Column ${columnIndex}`}
-                        >
-                            {cell !== 0 && (cell === 0.5 ? 'X' : 'O')}
+        return (
+            <>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div>
+                        <div style={{ paddingRight: '20px' }}>
+                            {!gameOver && <p>Current Player: {currentPlayer}</p>}
+                            {gameOver && (winner ? <p>Winner: {winner}</p> : <p>Game Over!</p>)}
+                            {board.map((row, rowIndex) => (
+                                <div key={rowIndex} style={{ display: 'flex' }}>
+                                    {row.map((cell, columnIndex) => (
+                                        <div 
+                                            key={`${rowIndex}-${columnIndex}`}
+                                            tabIndex={0}
+                                            onClick={() => handleColumnClick(columnIndex)}
+                                            onKeyDown={(event) => handleKeyDown(event, columnIndex)}
+                                            onMouseEnter={() => handleMouseEnter(columnIndex)}
+                                            onMouseLeave={handleMouseLeave}
+                                            style={getColumnStyle(columnIndex, cell)}
+                                            aria-label={`Column ${columnIndex}`}
+                                        >
+                                            {cell !== 0 && (cell === 0.5 ? 'X' : 'O')}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <UnderGameBar resetGame={resetGame} />
+                        </div>
+                    </div>
+                    <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <ModeButtonGroup buttons={buttons} currentMode={currentMode} />
+                    </Grid>
                 </div>
-            ))}
-            {!gameOver && <p>Current Player: {currentPlayer}</p>}
-            {gameOver && (winner ? <p>Winner: {winner}</p> : <p>Game Over!</p>)}
-        </div>
-    );
+            </>
+        );
+            
 };
 
 export default GameBoard;

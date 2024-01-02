@@ -180,7 +180,7 @@ function App() {
             <Navbar />
             <hr></hr>
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={5} className="gameboard-padding">
+                <Grid item xs={12} sm={6} className="gameboard-padding">
                     {!username && <UsernameInput setUsername={setUsername} />}
                     {username && (
                       <GameBoard 
@@ -189,23 +189,22 @@ function App() {
                         gameOver={gameOver}
                         winner={winner}
                         handleColumnClick={handleColumnClick}
+                        buttons={buttons}
+                        currentMode={mode}
+                        resetGame={resetGame}
                       />
                     )}
                 </Grid>
 
-              <Grid item xs={12} sm={2} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <ModeButtonGroup buttons={buttons} currentMode={mode} />
-              </Grid>
 
-                <Grid item xs={12} sm={5} className="leaderboard-padding">
+                <Grid item xs={12} sm={6} className="leaderboard-padding">
                   <Leaderboard data={leaderboardData} />
                 </Grid>
             </Grid>
-            <BottomNavBar 
+            {/* <BottomNavBar 
               resetGame={resetGame}
-              handlePlayHuman={handlePlayHuman}
               mode={mode}
-            />
+            /> */}
           
          
         </div>

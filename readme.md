@@ -3,6 +3,8 @@
 ## Overview
 This Connect4 application is a full-stack web application built using React, TypeScript, and Python. It is containerized using Docker and Docker Compose, making it easy to run and deploy. The game aims to replicate the classic Connect4 experience with additional features, including various AI opponents and a leaderboard system.
 
+![Connect4 Game Screenshot](assets/pictures/connect4.png)
+
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
 - **AI Opponents**: Includes several trained Deep Q-Network (DQN) agents, with ongoing improvements and additions such as Monte Carlo Tree Search (MCTS) agents and Minimax with Alpha-Beta Pruning agents.

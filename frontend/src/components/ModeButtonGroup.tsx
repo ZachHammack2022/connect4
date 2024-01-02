@@ -18,12 +18,11 @@ const ModeButton: React.FC<ModeButtonProps> = ({ label, mode, currentMode, onCli
     </Button>
 );
 
-interface LeanModeButtonProps {
+export interface LeanModeButtonProps {
     label: string;
     mode: string;
     onClick: () => void;
 }
-
 
 interface ModeButtonGroupProps {
     buttons: LeanModeButtonProps[];

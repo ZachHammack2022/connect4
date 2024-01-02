@@ -1,12 +1,11 @@
 import React from 'react';
 import { Toolbar, Button } from '@mui/material';
 
-interface BottomNavBarProps {
+interface UnderGameBarProps {
   resetGame: () => Promise<void>;
-  mode: string;
 }
 
-const BottomNavBar: React.FC<BottomNavBarProps> = ({ resetGame, mode }) => {
+const UnderGameBar: React.FC<UnderGameBarProps> = ({ resetGame }) => {
     return (
         <Toolbar style={{ justifyContent: 'center', gap: '10px' }}>
           <Button variant={"outlined"} color="inherit" onClick={resetGame}>
@@ -16,4 +15,4 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ resetGame, mode }) => {
     );
 };
 
-export default BottomNavBar;
+export default UnderGameBar;
