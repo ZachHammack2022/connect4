@@ -5,9 +5,10 @@ import random
 class Connect4Env(gym.Env):
     def __init__(self):
         super(Connect4Env, self).__init__()
+        self.NUM_MOVES = 7
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
-        self.action_space = spaces.Discrete(7)  # 7 columns
+        self.action_space = spaces.Discrete(self.NUM_MOVES)
         self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
