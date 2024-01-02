@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { AxiosError } from 'axios';
 import { LeaderboardEntry,MoveSuccessResponse,ErrorResponse } from '../interfaces/interfaces';
 
 
