@@ -54,9 +54,6 @@ function App() {
     setMode(newMode);
 };
 
-  
-    
-
     const fetchGameState = async () => {
       try {
           const response = await axios.get('/state');
@@ -69,9 +66,6 @@ function App() {
         }
     };
 
-    const isColumnFull = (column: number) => {
-      return board[0][column] !== 0;
-    };
 
    
      
@@ -111,16 +105,6 @@ function App() {
     }
   };
 
-    const updateGameBoard = (flatBoard: number[]) => {
-      console.log("board: ",flatBoard)
-      const board2D = [];
-      for (let row = 0; row < 6; row++) {
-        board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
-      }
-      setBoard(board2D);
-    };
-
-
     const resetGame = async () => {
       try {
         const response = await axios.post('/reset');
@@ -141,6 +125,21 @@ function App() {
       }
     }
   }
+  // funcitons below here must stay bc they directly modify state vars
+  //-------------------------------------
+
+  const isColumnFull = (column: number) => {
+    return board[0][column] !== 0;
+  };
+
+  const updateGameBoard = (flatBoard: number[]) => {
+    const board2D = [];
+    for (let row = 0; row < 6; row++) {
+      board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
+    }
+    setBoard(board2D);
+  };
+
   useEffect(() => {
     const initLeaderboard = async () => {
         try {
