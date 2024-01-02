@@ -5,14 +5,14 @@ interface ModeButtonProps {
     label: string;
     mode: string;
     currentMode: string;
-    onClick: () => void;
+    onClick: (mode:string) => void;
 }
 
 const ModeButton: React.FC<ModeButtonProps> = ({ label, mode, currentMode, onClick }) => (
     <Button
         variant="contained"
         color={currentMode === mode ? "primary" : "inherit"}
-        onClick={onClick}
+        onClick={() => onClick(mode)}
     >
         {label}
     </Button>
@@ -21,7 +21,7 @@ const ModeButton: React.FC<ModeButtonProps> = ({ label, mode, currentMode, onCli
 export interface LeanModeButtonProps {
     label: string;
     mode: string;
-    onClick: () => void;
+    onClick: (mode:string) => void;
 }
 
 interface ModeButtonGroupProps {

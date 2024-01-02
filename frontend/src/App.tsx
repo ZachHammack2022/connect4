@@ -49,26 +49,12 @@ function App() {
       setError(null);
   };
 
-    
-    const handlePlayDQN = async () => {
-      await axios.post('/set_mode', { mode: 'DQN' });
-      setMode('DQN');
-  };
+  const handleChangeMode = async (newMode:string) => {
+    await axios.post('/set_mode', { mode: newMode });
+    setMode(newMode);
+};
 
-    const handlePlayMCTS = async () => {
-        await axios.post('/set_mode', { mode: 'MCTS' });
-        setMode('MCTS');
-    };
-
-    const handlePlayHuman = async () => {
-        await axios.post('/set_mode', { mode: 'human' });
-        setMode('human');
-    };
-
-    const handlePlayRandom = async () => {
-        await axios.post('/set_mode', { mode: 'random' });
-        setMode('random');
-    };
+  
     
 
     const fetchGameState = async () => {
@@ -171,12 +157,13 @@ function App() {
 
 
 
-    const buttons = [
-      { label: 'DQN', mode: 'DQN', onClick: handlePlayDQN },
-      { label: 'MCTS', mode: 'MCTS', onClick: handlePlayMCTS },
-      { label: 'Human', mode: 'human', onClick: handlePlayHuman },
-      { label: 'Random', mode: 'random', onClick: handlePlayRandom }
-  ];
+const buttons = [
+  { label: 'DQN', mode: 'DQN', onClick: () => handleChangeMode("DQN") },
+  { label: 'MCTS', mode: 'MCTS', onClick: () => handleChangeMode("MCTS") },
+  { label: 'Human', mode: 'human', onClick: () => handleChangeMode("Human") },
+  { label: 'Random', mode: 'random', onClick: () => handleChangeMode("Random") }
+];
+
 
     return (
         <div className="App">
