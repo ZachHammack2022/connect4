@@ -4,10 +4,11 @@ import UsernameInput from './components/UsernameInput';
 import Leaderboard from './components/Leaderboard';
 import GameBoard from './components/GameBoard'; // Your existing GameBoard component
 import BottomNavBar from './components/BottomNavBar';
-import ModeButtonGroup from './components/ModeButtonGroup';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
+import { AxiosError } from 'axios';
 import "./App.css"
+import ErrorPopup from './components/ErrorPopup';
 // Use environment variable for the Axios base URL
 const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 axios.defaults.baseURL = baseURL;
@@ -20,6 +21,8 @@ function App() {
     const [winner, setWinner] = useState<string | null>(null);
     const [mode, setMode] = useState<string>("human") // 'human' or 'computer'
     const [leaderboardData, setLeaderboardData] = useState([]);
+    const [error, setError] = useState<string | null>(null);
+    
 
 
 
@@ -34,15 +37,35 @@ function App() {
       error: string;
     }
 
+    function isAxiosError(error: unknown): error is AxiosError {
+      return (error as AxiosError).response !== undefined;
+  }
+
+  interface ErrorResponse {
+    message:string;
+  }
+  
+
     const fetchLeaderboard = async () => {
       try {
         const response = await axios.get('/leaderboard/');
         setLeaderboardData(response.data);
       } catch (error) {
-        console.error("Error while fetching leaderboard data:", error);
-        // Handle the error appropriately
-      }
-    };
+        if (isAxiosError(error)) {
+            // Now TypeScript knows this is an AxiosError
+            const message = (error.response?.data as ErrorResponse).message || "An unknown error occurred";
+            setError(message);
+        } else {
+            // Handle non-Axios errors
+            setError("An unknown error occurred");
+        }
+        console.error("Error during reset game:", error);
+    }
+};
+
+    const handleCloseErrorPopup = () => {
+      setError(null);
+  };
 
     
     const handlePlayDQN = async () => {
@@ -90,7 +113,6 @@ function App() {
           await axios.post('/submit_game/', { username, won });
           fetchLeaderboard();
           console.log("posted game result and fetched leaderboard")
-          // Handle successful submission, e.g., fetch updated leaderboard
         } catch (error) {
           console.error("Error while submitting game result:", error);
           // Handle the error appropriately
@@ -205,6 +227,11 @@ function App() {
               resetGame={resetGame}
               mode={mode}
             /> */}
+            <ErrorPopup 
+                open={!!error} 
+                errorMessage={error || ''} 
+                handleClose={handleCloseErrorPopup} 
+            />
           
          
         </div>
