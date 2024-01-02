@@ -3,6 +3,7 @@ import ModeButtonGroup from './ModeButtonGroup';
 import UnderGameBar from './UnderGameBar'
 import { LeanModeButtonProps } from './ModeButtonGroup';
  import Grid from '@mui/material/Grid';
+ import { Typography } from '@mui/material';
 
 interface GameBoardProps {
     board: number[][];
@@ -61,6 +62,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
         }
         };
 
+        const gameStatusDisplay = () => {
+            if (!gameOver) {
+                return (
+                    <Typography variant="h6" component="p">
+                        Current Player: {currentPlayer}
+                    </Typography>
+                );
+            } else {
+                return (
+                    <Typography variant="h6" component="p">
+                        {winner ? `Winner: ${winner}` : 'Game Over!'}
+                    </Typography>
+                );
+            }
+        };
+
 
 
         return (
@@ -68,8 +85,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div>
                         <div style={{ paddingRight: '20px' }}>
-                            {!gameOver && <p>Current Player: {currentPlayer}</p>}
-                            {gameOver && (winner ? <p>Winner: {winner}</p> : <p>Game Over!</p>)}
+                        {gameStatusDisplay()}
                             {board.map((row, rowIndex) => (
                                 <div key={rowIndex} style={{ display: 'flex' }}>
                                     {row.map((cell, columnIndex) => (
