@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from backend.types.game_types import Move,Mode
 from game.game import Connect4Env
-from dependencies import get_game
+from backend.dependencies import get_game
 router = APIRouter()
 
 @router.post("/move")
@@ -15,17 +15,17 @@ async def make_move(move: Move, game: Connect4Env = Depends(get_game)):
     return {"board": game._get_obs(), "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
 
 @router.post("/reset")
-def reset_game(game: Connect4Env = Depends(get_game)):
+async def reset_game(game: Connect4Env = Depends(get_game)):
     game.reset()
     print(game._get_obs())
     return {"board": game._get_obs(), "current_player": game.current_player}
 
 @router.get("/state")
-def get_state(game: Connect4Env = Depends(get_game)):
+async def get_state(game: Connect4Env = Depends(get_game)):
     return {"board": game._get_obs(), "current_player": game.current_player}
 
 @router.post("/set_mode")
-def set_mode(mode: Mode,player:int, game: Connect4Env = Depends(get_game)):
+async def set_mode(mode: Mode,player:int, game: Connect4Env = Depends(get_game)):
     try:
         game.set_mode(player,mode.mode)
         return {f"message": "Player {player} mode set to " + mode.mode}

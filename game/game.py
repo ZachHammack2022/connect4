@@ -43,7 +43,7 @@ class Connect4Env(gym.Env):
         else:
             raise ValueError("Invalid player number")
         
-    async def step(self, action):
+    def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):
             return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}

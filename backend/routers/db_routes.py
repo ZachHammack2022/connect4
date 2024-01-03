@@ -1,7 +1,6 @@
 from backend.types.db_types import GameResult
-from ..dependencies import get_game, get_database
+from backend.dependencies import get_game, get_database
 from fastapi import APIRouter
-from dependencies import get_game
 from fastapi import HTTPException
 import logging
 

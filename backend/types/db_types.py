@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from databases import Database
-from pydantic import BaseModel
 
 class GameResult(BaseModel):
     username: str
     won: bool
-
     
 class AppLifespan:
     def __init__(self, app: FastAPI, db: Database):
