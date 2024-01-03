@@ -1,11 +1,10 @@
 import random
-from player import Player
-from game.game import Connect4Env
+from agents.player import Player
 
 class RandomPlayer(Player):
     def __init__(self):
-        super().__init__(name="human", display_name="Human")
+        super().__init__(name="random", display_name="Random")
+        self.NUM_ACTIONS = 7
         
-    def make_move(self, game_env:Connect4Env):
-        action = random.randint(0, game_env.NUM_MOVES)
-        game_env.step(action)
+    async def make_move(self, game_env):
+        await game_env.step(random.randint(0,self.NUM_ACTIONS-1))

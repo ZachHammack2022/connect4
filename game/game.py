@@ -1,9 +1,13 @@
 import gym
 from gym import spaces
 import random
+import asyncio
+from connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from agents.random import RandomPlayer
+from agents.human import HumanPlayer
 
 class Connect4Env(gym.Env):
-    def __init__(self):
+    def __init__(self,player1, player2):
         super(Connect4Env, self).__init__()
         self.NUM_MOVES = 7
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
@@ -12,21 +16,30 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
-        self.mode = "human" # human or computer
-    
+        self.player1 = player1
+        self.player2 = player2
+        
     def seed(self, seed=None):
         random.seed(seed)
     
-    def set_mode(self,mode):
-        self.mode = mode
+    def set_player(self, player_number, player_type):
+        if player_number == 1:
+            self.player1 = player_type
+        elif player_number == 2:
+            self.player2 = player_type
+        else:
+            raise ValueError("Invalid player number")
 
-    def step(self, action):
+    async def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):
             return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}
+        
+        # Check if the game is already terminated
         if self.terminated:
             return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
-            
+        
+        # Make the move for the current player
         self._make_move(action)
         
         # Check if the move resulted in a win
@@ -36,14 +49,20 @@ class Connect4Env(gym.Env):
             self.terminated = True
             reward = 100
         else:
+            reward = 0.01
             self.terminated = self._is_board_full()
-            if self.terminated:
-                reward = 10
-            else:
-                reward = 0.01
-                self.switch_player()  # Switch player only if no win
+            if not self.terminated:
+                # Switch player only if no win and the board is not full
+                self.switch_player()
 
-        return self._get_obs(), reward, self.terminated, {}
+        # Trigger AI's move if the next player is an AI
+        if not self.terminated:
+            current_player = self.player1 if self.current_player == 'X' else self.player2
+            if isinstance(current_player, RandomPlayer):
+                await current_player.make_move(self)
+
+        # Return the updated game state
+        return self._get_obs(), reward, self.terminated, {"winner": self.winner}
 
 
     def reset(self):
@@ -53,6 +72,10 @@ class Connect4Env(gym.Env):
         self.winner = None
         return self._get_obs()
 
+    def switch_player(self):
+        self.current_player = 'O' if self.current_player == 'X' else 'X'
+# Only functions above this line should change
+#------------------------------------#
     def render(self, mode='human', close=False):
         if close:
             return
@@ -99,59 +122,16 @@ class Connect4Env(gym.Env):
         for row in self.board:
             print('|' + '|'.join(row) + '|')
     
-    def check_horizontal(self,player):
-        # Check horizontal
-        for row in range(6):
-            for col in range(4):
-                if self.board[row][col] == player and \
-                   self.board[row][col+1] == player and \
-                   self.board[row][col+2] == player and \
-                   self.board[row][col+3] == player:
-                    return True
-                
-    def check_vertical(self,player): 
-        # Check vertical
-        for col in range(7):
-            for row in range(3):
-                if self.board[row][col] == player and \
-                   self.board[row+1][col] == player and \
-                   self.board[row+2][col] == player and \
-                   self.board[row+3][col] == player:
-                    return True   
-    
-    def check_positive_horizontal(self,player): 
-        # Check positive diagonal
-        for col in range(4):
-            for row in range(3, 6):
-                if self.board[row][col] == player and \
-                   self.board[row-1][col+1] == player and \
-                   self.board[row-2][col+2] == player and \
-                   self.board[row-3][col+3] == player:
-                    return True
-                
-    def check_negative_horizontal(self,player): 
-        # Check negative diagonal
-        for col in range(4):
-            for row in range(3):
-                if self.board[row][col] == player and \
-                   self.board[row+1][col+1] == player and \
-                   self.board[row+2][col+2] == player and \
-                   self.board[row+3][col+3] == player:
-                    return True
-        
-
     def check_winner(self,player):
  
-        if self.check_horizontal(player) or \
-            self.check_vertical(player) or \
-            self.check_positive_horizontal(player) or \
-            self.check_negative_horizontal(player):
+        if check_horizontal(self.board,player) or \
+            check_vertical(self.board,player) or \
+            check_positive_horizontal(self.board,player) or \
+            check_negative_horizontal(self.board,player):
             return True
         
         return False
 
-    def switch_player(self):
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
 
 def play_game(env):
     _ = env.reset()
@@ -194,8 +174,28 @@ def random_agent_test(env,render=True):
         action = random.choice([i for i in range(7) if env._is_valid_action(i)])
         _, _, done, _ = env.step(action)
     assert done  # Ensure the game ends
+    
+async def main():
+    # Initialize players
+    player1 = HumanPlayer()
+    player2 = RandomPlayer()
+
+    # Set up the game environment
+    env = Connect4Env(player1, player2)
+    env.reset()
+
+    # Game loop
+    while not env.terminated:
+        current_player = env.player1 if env.current_player == 'X' else env.player2
+
+        # Await the current player's move
+        await current_player.make_move(env)
+
+        # Check for game termination
+        if env.terminated:
+            print(f"Game Over. Winner: {env.winner}")
+            break
+
 
 if __name__ == "__main__":
-    env = Connect4Env()
-    play_game(env)
-    # random_agent_test(env)
+    asyncio.run(main())

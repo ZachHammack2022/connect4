@@ -13,6 +13,7 @@ setup(
         'uvicorn==0.25.0',
         'databases==0.8.0',
         'asyncpg==0.29.0',
+        'asyncio==3.4.3',
     ]
 )
 
