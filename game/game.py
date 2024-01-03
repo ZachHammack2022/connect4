@@ -177,7 +177,7 @@ def random_agent_test(env,render=True):
     
 async def main():
     # Initialize players
-    player1 = HumanPlayer()
+    player1 = RandomPlayer()
     player2 = RandomPlayer()
 
     # Set up the game environment
@@ -188,8 +188,16 @@ async def main():
     while not env.terminated:
         current_player = env.player1 if env.current_player == 'X' else env.player2
 
-        # Await the current player's move
-        await current_player.make_move(env)
+        observation = env._get_obs()  # Get the current state/observation of the game
+
+        # Get action from the current player
+        action = await current_player.make_move(observation)
+
+        # Step the environment with the action
+        await env.step(action)
+        
+        env.render()
+
 
         # Check for game termination
         if env.terminated:
