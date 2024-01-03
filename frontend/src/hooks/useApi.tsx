@@ -44,8 +44,8 @@ export const useFetchGameState = () => {
 
 // useChangeMode hook
 export const useChangeMode = () => {
-    const handleChangeMode = async (newMode: string) => {
-        await axios.post('/set_mode', { mode: newMode });
+    const handleChangeMode = async (newMode: string,player:number) => {
+        await axios.post('/set_mode', { mode: newMode,player:player });
         return newMode;
     };
     return { handleChangeMode };

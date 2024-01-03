@@ -11,8 +11,10 @@ interface GameBoardProps {
     gameOver: boolean;
     winner: string | null;
     handleColumnClick: (column: number) => Promise<void>;
-    buttons: LeanModeButtonProps[];
-    currentMode: string;
+    buttons1: LeanModeButtonProps[];
+    currentMode1: string;
+    buttons2: LeanModeButtonProps[];
+    currentMode2: string;
     resetGame: () => Promise<void>;
 }
 
@@ -22,8 +24,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
     gameOver,
     winner,
     handleColumnClick,
-    buttons,
-    currentMode,
+    buttons1,
+    currentMode1,
+    buttons2,
+    currentMode2,
     resetGame
 }) => {
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
@@ -83,6 +87,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
         return (
             <>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}/>
+                    </Grid>
                     <div>
                         <div style={{ paddingRight: '20px' }}>
                         {gameStatusDisplay()}
@@ -110,7 +117,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                         </div>
                     </div>
                     <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <ModeButtonGroup buttons={buttons} currentMode={currentMode} />
+                        <ModeButtonGroup buttons={buttons2} currentMode={currentMode2}/>
                     </Grid>
                 </div>
             </>

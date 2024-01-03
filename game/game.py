@@ -2,12 +2,14 @@ import gym
 from gym import spaces
 import random
 import asyncio
-from connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
-from agents.random import RandomPlayer
-from agents.human import HumanPlayer
+from game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from game.agents.random import RandomPlayer
+from game.agents.human import HumanPlayer
+from game.agents.mcts import MCTSPlayer
+from game.agents.dqn import DQNPlayer
 
 class Connect4Env(gym.Env):
-    def __init__(self,player1, player2):
+    def __init__(self):
         super(Connect4Env, self).__init__()
         self.NUM_MOVES = 7
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
@@ -16,20 +18,31 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
-        self.player1 = player1
-        self.player2 = player2
+        self.player_types = {
+            'human': HumanPlayer,
+            'random': RandomPlayer,
+            'dqn': DQNPlayer,
+            'mcts': MCTSPlayer,
+        }
+        self.player1 = HumanPlayer
+        self.player2 = HumanPlayer
         
     def seed(self, seed=None):
         random.seed(seed)
     
     def set_player(self, player_number, player_type):
+        if player_type not in self.player_types:
+            raise ValueError(f"Invalid player type: {player_type}")
+
+        player_class = self.player_types[player_type]
+
         if player_number == 1:
-            self.player1 = player_type
+            self.player1 = player_class()
         elif player_number == 2:
-            self.player2 = player_type
+            self.player2 = player_class()
         else:
             raise ValueError("Invalid player number")
-
+        
     async def step(self, action):
         # Check if action is valid
         if not self._is_valid_action(action):

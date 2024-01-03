@@ -21,7 +21,8 @@ function App() {
     const [currentPlayer, setCurrentPlayer] = useState<string>('X');
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
-    const [mode, setMode] = useState<string>("human") 
+    const [mode1, setMode1] = useState<string>("human") 
+    const [mode2, setMode2] = useState<string>("human") 
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
     const { fetchLeaderboard } = useFetchLeaderboard();
@@ -42,12 +43,17 @@ const handleSubmitGameResult = async (won:boolean) => {
     }
 };
 
-const handleModeChange = async (newMode:string) => {
+const handleModeChange = async (newMode:string,player:number) => {
     try {
-        await handleChangeMode(newMode);
-        setMode(newMode);
+        await handleChangeMode(newMode,player);
+        if (player === 1){
+          setMode1(newMode);
+        }
+        else if (player ===2){
+          setMode2(newMode);
+        }
     } catch (error) {
-        console.log(`Error while changing mode: ${error}`);
+        console.log(`Error while changing mode for player ${player}: ${error}`);
     }
 };
 
@@ -132,11 +138,17 @@ const onResetGame = async () => {
 
 
 
-const buttons = [
-  { label: 'DQN', mode: 'DQN', onClick: () => handleModeChange("DQN") },
-  { label: 'MCTS', mode: 'MCTS', onClick: () => handleModeChange("MCTS") },
-  { label: 'Human', mode: 'human', onClick: () => handleModeChange("human") },
-  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random") }
+const buttons1 = [
+  { label: 'DQN', mode: 'DQN', onClick: () => handleModeChange("DQN",1) },
+  { label: 'MCTS', mode: 'MCTS', onClick: () => handleModeChange("MCTS",1) },
+  { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",1) },
+  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",1) }
+];
+const buttons2 = [
+  { label: 'DQN', mode: 'DQN', onClick: () => handleModeChange("DQN",2) },
+  { label: 'MCTS', mode: 'MCTS', onClick: () => handleModeChange("MCTS",2) },
+  { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",2) },
+  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",2) }
 ];
 
 
@@ -154,8 +166,10 @@ const buttons = [
                         gameOver={gameOver}
                         winner={winner}
                         handleColumnClick={onColumnClick}
-                        buttons={buttons}
-                        currentMode={mode}
+                        buttons1={buttons1}
+                        currentMode1={mode1}
+                        buttons2={buttons2}
+                        currentMode2={mode2}
                         resetGame={onResetGame}
                       />
                     )}
