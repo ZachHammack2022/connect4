@@ -3,7 +3,7 @@ class Player:
         self.name=name
         self.display_name=display_name
         
-    def make_move(self, game_env):
+    def make_move(self, obs):
         raise NotImplementedError
     
 

@@ -5,14 +5,14 @@ class HumanPlayer(Player):
         self.NUM_MOVES = 7
         self.NUM_ROWS = 6
         
-    async def make_move(self, observation):
+    async def make_move(self, obs):
         valid_move = False
         while not valid_move:
             try:
                 action = int(input(f"Choose a column (0-6): "))
                 if 0 <= action < self.NUM_MOVES:
                     # Check if the action is valid based on the observation
-                    if self.is_valid_action(action, observation):
+                    if self.is_valid_action(action, obs):
                         valid_move = True
                     else:
                         print("Invalid move. Try again.")
