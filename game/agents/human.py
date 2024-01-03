@@ -21,15 +21,6 @@ class HumanPlayer(Player):
             except ValueError:
                 print("Invalid input. Please enter a number.")
         return action
-
+    ##TODO implement action validation for human (god for checking, but already checked by frontend)
     def is_valid_action(self, action, observation):
-            # Calculate the index to check in the observation array
-            index_to_check = action * self.NUM_ROWS + (self.NUM_ROWS - 1)
-            
-            # Traverse back through the column to find the first empty cell
-            for row in range(self.NUM_ROWS):
-                if observation[index_to_check - row * self.NUM_MOVES] == 0:
-                    return True
-
-            # If no empty cell is found in the column, the move is invalid
-            return False
+            return True

@@ -131,54 +131,11 @@ class Connect4Env(gym.Env):
             return True
         
         return False
-
-
-def play_game(env):
-    _ = env.reset()
-    done = False
-
-    while not done:
-        env.render()
-        valid_move = False
-
-        while not valid_move:
-            try:
-                action = int(input(f"Player {env.current_player}, choose a column (0-6): "))
-                if action < 0 or action > 6:
-                    raise ValueError
-
-                # Check if the column is full
-                if env.board[0][action] != ' ':
-                    print("Column is full. Try a different one.")
-                else:
-                    valid_move = True
-
-            except ValueError:
-                print("Invalid column. Try again.")
-
-        _, reward, done, info = env.step(action)
-
-        if done:
-            env.render()
-            if reward == 1:
-                print(f"Player {env.winner} wins!")  # Use env.winner to announce the winner
-            else:
-                print("Game over!")
-
-def random_agent_test(env,render=True):
-    _ = env.reset()
-    done = False
-    while not done:
-        if render:
-            env.render()
-        action = random.choice([i for i in range(7) if env._is_valid_action(i)])
-        _, _, done, _ = env.step(action)
-    assert done  # Ensure the game ends
     
 async def main():
     # Initialize players
     player1 = RandomPlayer()
-    player2 = RandomPlayer()
+    player2 = HumanPlayer()
 
     # Set up the game environment
     env = Connect4Env(player1, player2)

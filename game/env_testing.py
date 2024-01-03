@@ -1,7 +1,5 @@
 import unittest
 from game import Connect4Env
-import asyncio
-
 
 class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
     
@@ -20,7 +18,6 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(env.check_winner(last_player))  # Check if the last player won
 
-    # Test for vertical win
     async def test_vertical_win(self):
         player1,player2 = "",""
         env = Connect4Env(player1,player2)
@@ -35,7 +32,6 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         
         self.assertTrue(env.check_winner(last_player))
 
-    # Test for positive diagonal win
     async def test_positive_diagonal_win(self):
         player1,player2 = "",""
         env = Connect4Env(player1,player2)
