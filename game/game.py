@@ -55,12 +55,6 @@ class Connect4Env(gym.Env):
                 # Switch player only if no win and the board is not full
                 self.switch_player()
 
-        # Trigger AI's move if the next player is an AI
-        if not self.terminated:
-            current_player = self.player1 if self.current_player == 'X' else self.player2
-            if isinstance(current_player, RandomPlayer):
-                await current_player.make_move(self)
-
         # Return the updated game state
         return self._get_obs(), reward, self.terminated, {"winner": self.winner}
 
@@ -144,19 +138,13 @@ async def main():
     # Game loop
     while not env.terminated:
         current_player = env.player1 if env.current_player == 'X' else env.player2
-
-        observation = env._get_obs()  # Get the current state/observation of the game
-
-        # Get action from the current player
+        observation = env._get_obs()  
         action = await current_player.make_move(observation)
 
-        # Step the environment with the action
         await env.step(action)
         
         env.render()
 
-
-        # Check for game termination
         if env.terminated:
             print(f"Game Over. Winner: {env.winner}")
             break
