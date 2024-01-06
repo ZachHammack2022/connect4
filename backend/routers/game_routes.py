@@ -14,7 +14,7 @@ async def make_move(move: Move):
         raise HTTPException(status_code=400, detail="Invalid action, column full.")
     if game.terminated:
         return {"board": game._get_obs()[1:], "reward": 0, "done": True, "winner": game.winner}
-    _, reward, terminated, _ = game.step(move.column)
+    _, reward, terminated, _ = await game.play_turn(move.column)
     print(len(game._get_obs()))
     return {"board": game._get_obs(), "reward": reward, "done": terminated,"winner": game.winner, "current_player": game.current_player}
 
@@ -27,14 +27,6 @@ async def reset_game():
 @router.get("/state")
 async def get_state():
     return {"board": game._get_obs(), "current_player": game.current_player}
-
-# @router.post("/set_mode")
-# async def set_mode(mode: Mode,player:int):
-#     try:
-#         game.set_mode(player,mode.mode)
-#         return {f"message": "Player {player} mode set to " + mode.mode}
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/set_mode")
 async def set_mode(mode_change_input: ModeChangeInput):

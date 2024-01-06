@@ -2,11 +2,12 @@ import gym
 from gym import spaces
 import random
 import asyncio
-from connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
-from agents.random import RandomPlayer
-from agents.human import HumanPlayer
-from agents.mcts import MCTSPlayer
-from agents.dqn import DQNPlayer
+from game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from game.agents.random import RandomPlayer
+from game.agents.human import HumanPlayer
+from game.agents.mcts import MCTSPlayer
+from game.agents.dqn import DQNPlayer
+from game.agents.player import AIPlayer
 
 class Connect4Env(gym.Env):
     def __init__(self,player1='human',player2 ='human'):
@@ -75,7 +76,41 @@ class Connect4Env(gym.Env):
         # Return the updated game state
         return self._get_obs(), reward, self.terminated, {"winner": self.winner}
 
+    async def play_turn(self, action):
+        # Call the basic step function, which is synchronous in this case
+        obs, reward, self.terminated, info = self.step(action)
+        
+        
+        # Check if the game is not terminated and if the current player is AI
+        while not self.terminated:
+            if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
+                ai_player = self.player1
+            elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
+                ai_player = self.player2
+            else:
+                # If it's a human player's turn, break the loop as we don't need to make an AI move
+                break
 
+            # Get the observation for the current AI player
+            ai_observation = self._get_obs()
+
+            # Make the AI player's move
+            ai_action = await ai_player.make_move(ai_observation)
+
+            # Call the step function again for the AI's move
+            _, ai_reward, self.terminated, ai_info = self.step(ai_action)
+
+            # Update the reward and info with the AI's move outcomes
+            reward += ai_reward
+            info.update(ai_info)
+
+            # Exit the loop if the game has terminated
+            if self.terminated:
+                break
+
+        return obs, reward, self.terminated, info
+
+    
     def reset(self):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
@@ -145,27 +180,32 @@ class Connect4Env(gym.Env):
     
 async def main():
     # Initialize players
-    player1 = "random"
-    player2 = "human"
+    player1 = "human"
+    player2 = "random"
 
     # Set up the game environment
-    env = Connect4Env(player1,player2)
+    env = Connect4Env(player1, player2)
     env.reset()
 
     # Game loop
     while not env.terminated:
         current_player = env.player1 if env.current_player == 'X' else env.player2
-        observation = env._get_obs()  
-        action = await current_player.make_move(observation)
-
-        env.step(action)
         
+        # Check if the current player is human and requires input
+        if isinstance(current_player, HumanPlayer):
+            observation = env._get_obs()
+            action = await current_player.make_move(observation)
+            _, reward, terminated, _ = await env.play_turn(action)
+        else:
+            # If the current player is AI, play_turn will handle it
+            # No need to get a specific action, just pass None
+            _, reward, terminated, _ = await env.play_turn(None)
+
         env.render()
 
         if env.terminated:
             print(f"Game Over. Winner: {env.winner}")
             break
-
 
 if __name__ == "__main__":
     asyncio.run(main())
