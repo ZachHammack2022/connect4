@@ -6,7 +6,7 @@ import os
 game = Connect4Env()
 
 # Database URL from environment variable or default
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@postgres:5432/mydatabase")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/mydatabase")
 database = Database(DATABASE_URL)
 
 def get_game() -> Connect4Env:

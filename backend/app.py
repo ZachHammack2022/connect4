@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import game_routes, db_routes
-from backend.dependencies import database # lifespan
+from backend.dependencies import get_database
 from backend.types.db_types import AppLifespan
 
 app = FastAPI()
+database = get_database()
+print("database url: ",database.url)
 lifespan = AppLifespan(app, database)
 
 
