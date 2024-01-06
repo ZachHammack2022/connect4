@@ -5,13 +5,12 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
     
 
     async def test_horizontal_win(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         moves = [1, 1, 2, 2, 3, 3, 4]
         last_player = 'X'  # Start with player 'X'
 
         for move in moves:
-            _, _, done, _ = await env.step(move)
+            _, _, done, _ =  env.step(move)
             if done:
                 break
             last_player = 'O' if last_player == 'X' else 'X'  # Switch player after each move
@@ -19,13 +18,12 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(env.check_winner(last_player))  # Check if the last player won
 
     async def test_vertical_win(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         moves = [0, 1, 0, 1, 0, 1, 0]  # Same column to get a vertical win
         last_player = 'X'
 
         for move in moves:
-            _, _, done, _ = await env.step(move)
+            _, _, done, _ =  env.step(move)
             if done:
                 break
             last_player = 'O' if last_player == 'X' else 'X'
@@ -33,13 +31,12 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(env.check_winner(last_player))
 
     async def test_positive_diagonal_win(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         moves = [0, 1, 1, 2, 2, 3, 2, 3, 5, 3,3]  # Moves to create a positive diagonal
         last_player = 'X'
 
         for move in moves:
-            _, _, done, _ = await env.step(move)
+            _, _, done, _ =  env.step(move)
             if done:
                 break
             last_player = 'O' if last_player == 'X' else 'X'
@@ -47,13 +44,12 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
 
     # Test for negative diagonal win
     async def test_negative_diagonal_win(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         moves = [3, 2, 2, 1, 1, 0, 1, 0, 0, 6,0]  # Moves to create a negative diagonal
         last_player = 'X'
 
         for move in moves:
-            _, _, done, _ = await env.step(move)
+            _, _, done, _ =  env.step(move)
             if done:
                 break
             last_player = 'O' if last_player == 'X' else 'X'
@@ -61,8 +57,7 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
 
     # Test for a full board without a winner
     async def test_full_board_no_winner(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         # A sequence of moves that fills the board without a winner
         moves = [
             1, 0, 0,0,0,0, 0, # Column 0
@@ -75,13 +70,12 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         ]
         
         for move in moves:
-            _, _, done, _ = await env.step(move)
+            _, _, done, _ =  env.step(move)
         self.assertTrue(env._is_board_full() and not env.check_winner('X') and not env.check_winner('O'))
 
 
     async def test_invalid_move(self):
-        player1,player2 = "",""
-        env = Connect4Env(player1,player2)
+        env = Connect4Env()
         env.board[0][0] = 'X'  # Column 0 is now full
         self.assertFalse(env._is_valid_action(0))
 
