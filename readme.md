@@ -1,23 +1,22 @@
 # Connect4 Game Application
 
 ## Overview
-This Connect4 application is a full-stack web application built using React, TypeScript, and Python. It is containerized using Docker and Docker Compose, making it easy to run and deploy. The game aims to replicate the classic Connect4 experience with additional features, including various AI opponents and a leaderboard system.
+This Connect4 game is a full-stack web application built using a Python backend and a Typescript frontend. It is containerized using Docker and Docker Compose, making it easy to run and deploy. It aims to replicate the classic Connect4 experience with additional features including various AI opponents and a leaderboard system.
 
 ![Connect4 Game Screenshot](assets/pictures/connect4.png)
 
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
-- **AI Opponents**: Includes trained Deep Q-Network (DQN) agents, with ongoing improvements and additions such as Monte Carlo Tree Search (MCTS) agents and Minimax with Alpha-Beta Pruning agents.
-- **Player Choice**: Players can choose to play against random agents, DQN, MCTS, Minimax with Alpha-Beta Pruning agents, or another human in a 1v1 match. 
-- **Leaderboard**: A leaderboard that will track and display player rankings. Leaderboard per opponent type coming soon.
+- **Opponent Choice**: Switch your opponent at any time before, after, or during matches. 
+- **Leaderboard**: A leaderboard that will track and display player rankings.
 
 ## Technology Stack
-- **Frontend**: React, TypeScript
-- **Backend**: Python
+- **Frontend**: React, TypeScript, Material UI
+- **Backend**: Python, Pydantic
 - **Database**: PostgreSQL
 - **API Calls**: Axios, FastApi
 - **Containerization**: Docker, Docker Compose
-- **RL Agents**: Pytorch
+- **DQN Agent**: Pytorch
 
 ## Installation and Running the Application
 
@@ -37,4 +36,20 @@ If you want to run each service individually instead, you can run the following 
 ```bash
 docker compose up <service>
 ```
+
+## Upcoming
+- **Implementation of AI Agents**: Agents to be added include a Deep Q-Learning (DQN) agent, a Monte-Carlo Tree Search (MCTS) agent, and a Minimax with Alpha-Beta Pruning agent. 
+
+## Possible Future Additions
+- **Additional Games**: 
+    - Primarily 2-player games
+    - Each game will come with additional trained agents to play against.
+
+## Just for Practice
+- **CI/CD Pipeline**
+- **Hosting on AWS**
+- **Integrate Stripe**
+
+
+
 
