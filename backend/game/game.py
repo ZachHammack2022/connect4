@@ -2,7 +2,6 @@ import gym
 from gym import spaces
 import random
 import asyncio
-import sys
 from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
 from backend.game.agents.random import RandomPlayer
 from backend.game.agents.human import HumanPlayer

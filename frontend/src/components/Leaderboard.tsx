@@ -33,7 +33,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ data }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {data.slice(0, 4).map((entry, index) => (
+                        {data.slice(0, 5).map((entry, index) => (
                             <TableRow key={index}>
                                 <TableCell component="th" scope="row">
                                     {entry.username}

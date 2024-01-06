@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
     return (
         <AppBar position="static">
             <Toolbar className={"toolbar-centered"} >
-                <Typography variant="h5" className={"title"}>Connect4 Game</Typography>
+                <Typography variant="h5" className={"title"}>Connect4</Typography>
             </Toolbar>
         </AppBar>
     );
