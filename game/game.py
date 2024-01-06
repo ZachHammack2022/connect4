@@ -18,7 +18,7 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
-        self.player_types = {
+        self.player_modes = {
             'human': HumanPlayer,
             'random': RandomPlayer,
             'dqn': DQNPlayer,
@@ -30,11 +30,12 @@ class Connect4Env(gym.Env):
     def seed(self, seed=None):
         random.seed(seed)
     
-    def set_player(self, player_number, player_type):
-        if player_type not in self.player_types:
-            raise ValueError(f"Invalid player type: {player_type}")
+    def set_mode(self, player_number, player_mode):
+        print(player_number,player_mode)
+        if player_mode not in self.player_modes:
+            raise ValueError(f"Invalid player type: {player_mode}")
 
-        player_class = self.player_types[player_type]
+        player_class = self.player_modes[player_mode]
 
         if player_number == 1:
             self.player1 = player_class()

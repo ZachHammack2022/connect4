@@ -91,7 +91,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                         <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}/>
                     </Grid>
                     <div>
-                        <div style={{ paddingRight: '20px' }}>
+                        <div style={{ paddingRight: '20px',paddingLeft: '20px'  }}>
                         {gameStatusDisplay()}
                             {board.map((row, rowIndex) => (
                                 <div key={rowIndex} style={{ display: 'flex' }}>

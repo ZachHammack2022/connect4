@@ -44,12 +44,17 @@ const handleSubmitGameResult = async (won:boolean) => {
 };
 
 const handleModeChange = async (newMode:string,player:number) => {
+    console.log("new mode: ",newMode)
+    console.log("player: ",player)
+    console.log(player===1)
+    console.log(player===2)
     try {
-        await handleChangeMode(newMode,player);
+        const data = await handleChangeMode(newMode,player);
+        console.log(data)
         if (player === 1){
           setMode1(newMode);
         }
-        else if (player ===2){
+        else if (player === 2){
           setMode2(newMode);
         }
     } catch (error) {
@@ -139,14 +144,15 @@ const onResetGame = async () => {
 
 
 const buttons1 = [
-  { label: 'DQN', mode: 'DQN', onClick: () => handleModeChange("DQN",1) },
-  { label: 'MCTS', mode: 'MCTS', onClick: () => handleModeChange("MCTS",1) },
+  { label: 'DQN', mode: 'dqn', onClick: () => handleModeChange("dqn",1) },
+  { label: 'MCTS', mode: 'mcts', onClick: () => handleModeChange("mcts",1) },
   { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",1) },
   { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",1) }
 ];
+
 const buttons2 = [
-  { label: 'DQN', mode: 'DQN', onClick: () => handleModeChange("DQN",2) },
-  { label: 'MCTS', mode: 'MCTS', onClick: () => handleModeChange("MCTS",2) },
+  { label: 'DQN', mode: 'dqn', onClick: () => handleModeChange("dqn",2) },
+  { label: 'MCTS', mode: 'mcts', onClick: () => handleModeChange("mcts",2) },
   { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",2) },
   { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",2) }
 ];
