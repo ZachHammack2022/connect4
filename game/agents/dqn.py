@@ -1,5 +1,5 @@
 import random
-from game.agents.player import Player
+from agents.player import Player
 
 class DQNPlayer(Player):
     def __init__(self):

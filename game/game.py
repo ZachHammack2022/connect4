@@ -2,14 +2,14 @@ import gym
 from gym import spaces
 import random
 import asyncio
-from game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
-from game.agents.random import RandomPlayer
-from game.agents.human import HumanPlayer
-from game.agents.mcts import MCTSPlayer
-from game.agents.dqn import DQNPlayer
+from connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from agents.random import RandomPlayer
+from agents.human import HumanPlayer
+from agents.mcts import MCTSPlayer
+from agents.dqn import DQNPlayer
 
 class Connect4Env(gym.Env):
-    def __init__(self):
+    def __init__(self,player1='human',player2 ='human'):
         super(Connect4Env, self).__init__()
         self.NUM_MOVES = 7
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
@@ -24,8 +24,11 @@ class Connect4Env(gym.Env):
             'dqn': DQNPlayer,
             'mcts': MCTSPlayer,
         }
-        self.player1 = HumanPlayer
-        self.player2 = HumanPlayer
+        player1class = self.player_modes[player1]
+        player2class = self.player_modes[player2]
+
+        self.player1 = player1class()
+        self.player2 = player2class()
         
     def seed(self, seed=None):
         random.seed(seed)
@@ -142,11 +145,11 @@ class Connect4Env(gym.Env):
     
 async def main():
     # Initialize players
-    player1 = RandomPlayer()
-    player2 = HumanPlayer()
+    player1 = "random"
+    player2 = "human"
 
     # Set up the game environment
-    env = Connect4Env(player1, player2)
+    env = Connect4Env(player1,player2)
     env.reset()
 
     # Game loop
@@ -155,7 +158,7 @@ async def main():
         observation = env._get_obs()  
         action = await current_player.make_move(observation)
 
-        await env.step(action)
+        env.step(action)
         
         env.render()
 
