@@ -2,12 +2,13 @@ import gym
 from gym import spaces
 import random
 import asyncio
-from game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
-from game.agents.random import RandomPlayer
-from game.agents.human import HumanPlayer
-from game.agents.mcts import MCTSPlayer
-from game.agents.dqn import DQNPlayer
-from game.agents.player import AIPlayer
+import sys
+from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from backend.game.agents.random import RandomPlayer
+from backend.game.agents.human import HumanPlayer
+from backend.game.agents.mcts import MCTSPlayer
+from backend.game.agents.dqn import DQNPlayer
+from backend.game.agents.player import AIPlayer
 
 class Connect4Env(gym.Env):
     def __init__(self,player1='human',player2 ='human'):
@@ -181,11 +182,12 @@ class Connect4Env(gym.Env):
 async def main():
     # Initialize players
     player1 = "human"
-    player2 = "random"
+    player2 = "human"
 
     # Set up the game environment
     env = Connect4Env(player1, player2)
     env.reset()
+    env.render()
 
     # Game loop
     while not env.terminated:

@@ -1,4 +1,4 @@
-from game.game import Connect4Env
+from backend.game.game import Connect4Env
 from databases import Database
 import os
 

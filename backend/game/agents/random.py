@@ -1,7 +1,7 @@
 import random
-from game.agents.player import AIPlayer
+from backend.game.agents.player import AIPlayer
 
-class MCTSPlayer(AIPlayer):
+class RandomPlayer(AIPlayer):
     def __init__(self):
         super().__init__(name="random", display_name="Random")
         self.NUM_ACTIONS = 7
