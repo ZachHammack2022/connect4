@@ -4,6 +4,9 @@ import UnderGameBar from './UnderGameBar'
 import { LeanModeButtonProps } from './ModeButtonGroup';
 import Grid from '@mui/material/Grid';
 import { Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
+
 
 interface GameBoardProps {
     board: number[][];
@@ -30,27 +33,37 @@ const GameBoard: React.FC<GameBoardProps> = ({
     currentMode2,
     resetGame
 }) => {
+    const theme = useTheme();
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
-    const getColumnStyle = (columnIndex: number, cell: number): React.CSSProperties => {
+    const border = `1px solid ${theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[800]}`
+    const getCellStyle = (columnIndex: number, cell: number): React.CSSProperties => {
+        
         let backgroundColor: string;
+    
         if (cell === 0) {
-            backgroundColor = hoveredColumn === columnIndex ? '#e0e0e0' : 'white'; // Empty cell
+            backgroundColor = hoveredColumn === columnIndex
+                ? theme.palette.action.hover // Use a theme color for hovered column
+                : theme.palette.background.paper; // Use theme background color for empty cell
         } else if (cell === 0.5) {
             backgroundColor = 'red'; // Player X
         } else {
             backgroundColor = 'yellow'; // Player O
         }
+     
+
         return {
             width: 50,
             height: 50,
             backgroundColor: backgroundColor,
-            border: '1px solid black',
+            border:  border, //${theme.palette.divider}
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            color: 'black'
         };
     };
+    
 
     const handleMouseEnter = (columnIndex: number) => {
         setHoveredColumn(columnIndex);
@@ -93,6 +106,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     <div>
                         <div style={{ paddingRight: '20px',paddingLeft: '20px'  }}>
                         {gameStatusDisplay()}
+                            <div style={{border:border}}>
                             {board.map((row, rowIndex) => (
                                 <div key={rowIndex} style={{ display: 'flex' }}>
                                     {row.map((cell, columnIndex) => (
@@ -103,7 +117,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                             onKeyDown={(event) => handleKeyDown(event, columnIndex)}
                                             onMouseEnter={() => handleMouseEnter(columnIndex)}
                                             onMouseLeave={handleMouseLeave}
-                                            style={getColumnStyle(columnIndex, cell)}
+                                            style={getCellStyle(columnIndex, cell)}
                                             aria-label={`Column ${columnIndex}`}
                                         >
                                             {cell !== 0 && (cell === 0.5 ? 'X' : 'O')}
@@ -111,6 +125,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                     ))}
                                 </div>
                             ))}
+                            </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <UnderGameBar resetGame={resetGame} />

@@ -9,8 +9,19 @@ import axios from 'axios';
 import "./App.css"
 import {LeaderboardEntry } from './interfaces/interfaces';
 import { useFetchLeaderboard,useChangeMode,useFetchGameState,useHandleColumnClick,useResetGame,useSubmitGameResult } from './hooks/useApi';
-
 import ErrorPopup from './components/ErrorPopup';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+import { ColorModeContext, createAppTheme } from './components/ThemeContext';
+
+
+// const darkTheme = createTheme({
+//   palette: {
+//     mode: 'dark',
+//   },
+// });
+
 // Use environment variable for the Axios base URL
 const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 axios.defaults.baseURL = baseURL;
@@ -31,6 +42,16 @@ function App() {
     const { handleChangeMode } = useChangeMode();
     const { handleColumnClick } = useHandleColumnClick();
     const { resetGame } = useResetGame();
+    const [mode, setMode] = useState<'light' | 'dark'>('dark');
+
+    const colorMode = {
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+      },
+    };
+
+    const theme = createAppTheme(mode);
+  
 
 const handleSubmitGameResult = async (won:boolean) => {
     try {
@@ -159,45 +180,53 @@ const buttons2 = [
 
 
     return (
-        <div className="App">
-            <Navbar />
-            <hr></hr>
-            <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} className="gameboard-padding">
-                    {!username && <UsernameInput setUsername={setUsername} />}
-                    {username && (
-                      <GameBoard 
-                        board={board}
-                        currentPlayer={currentPlayer}
-                        gameOver={gameOver}
-                        winner={winner}
-                        handleColumnClick={onColumnClick}
-                        buttons1={buttons1}
-                        currentMode1={mode1}
-                        buttons2={buttons2}
-                        currentMode2={mode2}
-                        resetGame={onResetGame}
-                      />
-                    )}
-                </Grid>
+      <ColorModeContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+        <CssBaseline />
+            <div className="App">
+                <div style={{paddingBottom:20}}>
+                  <Navbar  />
+                </div>
+                
+                {/* <hr></hr> */}
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} className="gameboard-padding">
+                        {!username && <UsernameInput setUsername={setUsername} />}
+                        {username && (
+                          <GameBoard 
+                            board={board}
+                            currentPlayer={currentPlayer}
+                            gameOver={gameOver}
+                            winner={winner}
+                            handleColumnClick={onColumnClick}
+                            buttons1={buttons1}
+                            currentMode1={mode1}
+                            buttons2={buttons2}
+                            currentMode2={mode2}
+                            resetGame={onResetGame}
+                          />
+                        )}
+                    </Grid>
 
 
-                <Grid item xs={12} sm={6} className="leaderboard-padding">
-                  <Leaderboard data={leaderboardData} />
+                    <Grid item xs={12} sm={6} className="leaderboard-padding">
+                      <Leaderboard data={leaderboardData} />
+                    </Grid>
                 </Grid>
-            </Grid>
-            {/* <BottomNavBar 
-              resetGame={resetGame}
-              mode={mode}
-            /> */}
-            <ErrorPopup 
-                open={!!error} 
-                errorMessage={error || ''} 
-                handleClose={handleCloseErrorPopup} 
-            />
-          
-         
-        </div>
+                {/* <BottomNavBar 
+                  resetGame={resetGame}
+                  mode={mode}
+                /> */}
+                <ErrorPopup 
+                    open={!!error} 
+                    errorMessage={error || ''} 
+                    handleClose={handleCloseErrorPopup} 
+                />
+              
+            
+            </div>
+          </ThemeProvider>
+        </ColorModeContext.Provider>
     );
 }
 

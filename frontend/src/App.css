@@ -1,7 +1,7 @@
 .App {
   text-align: center;
   font-family: 'Arial', sans-serif;
-  background-color: #f3f3f3;
+  /* background-color: #f3f3f3; */ 
   min-height: 100vh; /* Full viewport height */
   display: flex;
   flex-direction: column;
