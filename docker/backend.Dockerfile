@@ -1,9 +1,6 @@
 # Start from a Python base image
 FROM python:3.10
 
-WORKDIR /app/game
-COPY ./game .
-
 # Set the working directory in the container
 WORKDIR /app/
 
