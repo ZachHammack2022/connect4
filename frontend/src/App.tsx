@@ -10,17 +10,9 @@ import "./App.css"
 import {LeaderboardEntry } from './interfaces/interfaces';
 import { useFetchLeaderboard,useChangeMode,useFetchGameState,useHandleColumnClick,useResetGame,useSubmitGameResult } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-
 import { ColorModeContext, createAppTheme } from './components/ThemeContext';
-
-
-// const darkTheme = createTheme({
-//   palette: {
-//     mode: 'dark',
-//   },
-// });
 
 // Use environment variable for the Axios base URL
 const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -53,72 +45,72 @@ function App() {
     const theme = createAppTheme(mode);
   
 
-const handleSubmitGameResult = async (won:boolean) => {
-    try {
-        const leaderboard = await submitGameResult(won);
-        if (leaderboard) {
-          setLeaderboardData(leaderboard);
-        }
-    } catch (error) {
-        console.log(`Error while submitting game result: ${error}`);
-    }
-};
-
-const handleModeChange = async (newMode:string,player:number) => {
-    console.log("new mode: ",newMode)
-    console.log("player: ",player)
-    console.log(player===1)
-    console.log(player===2)
-    try {
-        const data = await handleChangeMode(newMode,player);
-        console.log(data)
-        if (player === 1){
-          setMode1(newMode);
-        }
-        else if (player === 2){
-          setMode2(newMode);
-        }
-    } catch (error) {
-        console.log(`Error while changing mode for player ${player}: ${error}`);
-    }
-};
-
-const onColumnClick = async (column:number) => {
-        if (isColumnFull(column) ) {
-        setError("This column is full. Try a different one.");
-        return;
-      }
-      if (gameOver) {
-          setError("The game is over. Reset the game to play again.");
-          return;
-        }  
-  try {
-        const moveResponse = await handleColumnClick(column);
-        updateGameBoard(moveResponse.board);
-        setCurrentPlayer(moveResponse.current_player);
-        if (moveResponse.done) {
-            setGameOver(true);
-            setWinner(moveResponse.winner || null);
-            if (moveResponse.winner) {
-                handleSubmitGameResult(moveResponse.winner === 'X');
+    const handleSubmitGameResult = async (won:boolean) => {
+        try {
+            const leaderboard = await submitGameResult(won);
+            if (leaderboard) {
+              setLeaderboardData(leaderboard);
             }
+        } catch (error) {
+            console.log(`Error while submitting game result: ${error}`);
         }
-    } catch (error) {
-        setError(`Error while making a move: ${error}`);
-    }
-};
+    };
 
-const onResetGame = async () => {
-    try {
-        const resetResponse = await resetGame();
-        updateGameBoard(resetResponse.board);
-        setCurrentPlayer(resetResponse.current_player);
-        setGameOver(false);
-        setWinner(null);
-    } catch (error) {
-        setError(`Error while resetting game: ${error}`);
-    }
-};
+    const handleModeChange = async (newMode:string,player:number) => {
+        console.log("new mode: ",newMode)
+        console.log("player: ",player)
+        console.log(player===1)
+        console.log(player===2)
+        try {
+            const data = await handleChangeMode(newMode,player);
+            console.log(data)
+            if (player === 1){
+              setMode1(newMode);
+            }
+            else if (player === 2){
+              setMode2(newMode);
+            }
+        } catch (error) {
+            console.log(`Error while changing mode for player ${player}: ${error}`);
+        }
+    };
+
+    const onColumnClick = async (column:number) => {
+            if (isColumnFull(column) ) {
+            setError("This column is full. Try a different one.");
+            return;
+          }
+          if (gameOver) {
+              setError("The game is over. Reset the game to play again.");
+              return;
+            }  
+      try {
+            const moveResponse = await handleColumnClick(column);
+            updateGameBoard(moveResponse.board);
+            setCurrentPlayer(moveResponse.current_player);
+            if (moveResponse.done) {
+                setGameOver(true);
+                setWinner(moveResponse.winner || null);
+                if (moveResponse.winner) {
+                    handleSubmitGameResult(moveResponse.winner === 'X');
+                }
+            }
+        } catch (error) {
+            setError(`Error while making a move: ${error}`);
+        }
+    };
+
+    const onResetGame = async () => {
+        try {
+            const resetResponse = await resetGame();
+            updateGameBoard(resetResponse.board);
+            setCurrentPlayer(resetResponse.current_player);
+            setGameOver(false);
+            setWinner(null);
+        } catch (error) {
+            setError(`Error while resetting game: ${error}`);
+        }
+    };
 
     const handleCloseErrorPopup = () => {
       setError(null);

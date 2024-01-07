@@ -3,7 +3,7 @@
 ## Overview
 This Connect4 game is a full-stack web application built using a Python backend and a Typescript frontend. It is containerized using Docker and Docker Compose, making it easy to run and deploy. It aims to replicate the classic Connect4 experience with additional features including various AI opponents and a leaderboard system.
 
-![Connect4 Game Screenshot](assets/pictures/connect4_v2.png)
+![Connect4 Game Screenshot](assets/pictures/connect4_v3.png)
 
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
