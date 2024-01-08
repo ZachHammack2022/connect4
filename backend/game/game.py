@@ -34,19 +34,21 @@ class Connect4Env(gym.Env):
     def seed(self, seed=None):
         random.seed(seed)
     
-    def set_mode(self, player_number, player_mode):
+    async def set_mode(self, player_number, player_mode):
         print(player_number,player_mode)
         if player_mode not in self.player_modes:
             raise ValueError(f"Invalid player type: {player_mode}")
 
         player_class = self.player_modes[player_mode]
-
         if player_number == 1:
             self.player1 = player_class()
         elif player_number == 2:
-            self.player2 = player_class()
+            self.player2 = player_class()  
         else:
             raise ValueError("Invalid player number")
+        
+        if self.check_if_ai_move():
+            await self.run_ai_turns()
         
     def step(self, action):
         # Check if action is valid
@@ -76,38 +78,54 @@ class Connect4Env(gym.Env):
         # Return the updated game state
         return self._get_obs(), reward, self.terminated, {"winner": self.winner}
 
+    async def ai_move(self,ai_player):
+        # Get the observation for the current AI player
+        ai_observation = self._get_obs()
+
+        # Make the AI player's move
+        ai_action = await ai_player.make_move(ai_observation)
+
+        # Call the step function again for the AI's move
+        obs, reward, self.terminated, info = self.step(ai_action)
+
+        return (obs, reward, self.terminated, info)
+    
+    def get_ai_player(self):
+        if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
+            ai_player = self.player1
+        elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
+            ai_player = self.player2
+        return ai_player
+            
+    def check_if_ai_move(self):
+        if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
+            return True
+        elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
+            return True
+        
+        return False
+    
+    async def run_ai_turns(self):
+        while not self.terminated:
+            if not self.check_if_ai_move():
+                break
+           
+            ai_player = self.get_ai_player()
+            obs, reward, self.terminated, info = await self.ai_move(ai_player)
+            
+            # Exit the loop if the game has terminated
+            if self.terminated:
+                break
+    
+        return obs, reward, self.terminated, info
+        
     async def play_turn(self, action):
         # Call the basic step function, which is synchronous in this case
         obs, reward, self.terminated, info = self.step(action)
         
-        
-        # Check if the game is not terminated and if the current player is AI
-        while not self.terminated:
-            if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
-                ai_player = self.player1
-            elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
-                ai_player = self.player2
-            else:
-                # If it's a human player's turn, break the loop as we don't need to make an AI move
-                break
-
-            # Get the observation for the current AI player
-            ai_observation = self._get_obs()
-
-            # Make the AI player's move
-            ai_action = await ai_player.make_move(ai_observation)
-
-            # Call the step function again for the AI's move
-            _, ai_reward, self.terminated, ai_info = self.step(ai_action)
-
-            # Update the reward and info with the AI's move outcomes
-            reward += ai_reward
-            info.update(ai_info)
-
-            # Exit the loop if the game has terminated
-            if self.terminated:
-                break
-
+        if self.check_if_ai_move() and not self.terminated:
+            obs, reward, self.terminated, info = await self.run_ai_turns()
+            
         return obs, reward, self.terminated, info
 
     

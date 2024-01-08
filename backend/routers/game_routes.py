@@ -26,12 +26,12 @@ async def reset_game():
 
 @router.get("/state")
 async def get_state():
-    return {"board": game._get_obs(), "current_player": game.current_player}
+    return {"board": game._get_obs(), "done": game.terminated, "winner": game.winner, "current_player": game.current_player}
 
 @router.post("/set_mode")
 async def set_mode(mode_change_input: ModeChangeInput):
     try:
-        game.set_mode(mode_change_input.player, mode_change_input.mode)
-        return {"message": f"Player {mode_change_input.player} mode set to {mode_change_input.mode}"}
+        await game.set_mode(mode_change_input.player, mode_change_input.mode)
+        return {"board": game._get_obs(), "done": game.terminated, "winner": game.winner, "current_player": game.current_player}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
