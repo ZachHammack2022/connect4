@@ -8,6 +8,7 @@ from backend.game.agents.human import HumanPlayer
 from backend.game.agents.mcts import MCTSPlayer
 from backend.game.agents.dqn import DQNPlayer
 from backend.game.agents.player import AIPlayer
+from backend.game.agents.minimax import MinimaxPlayer
 
 class Connect4Env(gym.Env):
     def __init__(self,player1='human',player2 ='human'):
@@ -24,6 +25,7 @@ class Connect4Env(gym.Env):
             'random': RandomPlayer,
             'dqn': DQNPlayer,
             'mcts': MCTSPlayer,
+            'minimax': MinimaxPlayer
         }
         player1class = self.player_modes[player1]
         player2class = self.player_modes[player2]

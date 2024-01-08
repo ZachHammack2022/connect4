@@ -159,20 +159,20 @@ function App() {
 }, []); // Empty dependency array to run only on component mount
 
 
-
-
 const buttons1 = [
   { label: 'DQN', mode: 'dqn', onClick: () => handleModeChange("dqn",1) },
   { label: 'MCTS', mode: 'mcts', onClick: () => handleModeChange("mcts",1) },
   { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",1) },
-  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",1) }
+  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",1) },
+  { label: 'Minimax', mode: 'minimax', onClick: () => handleModeChange("minimax",1) }
 ];
 
 const buttons2 = [
   { label: 'DQN', mode: 'dqn', onClick: () => handleModeChange("dqn",2) },
   { label: 'MCTS', mode: 'mcts', onClick: () => handleModeChange("mcts",2) },
   { label: 'Human', mode: 'human', onClick: () => handleModeChange("human",2) },
-  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",2) }
+  { label: 'Random', mode: 'random', onClick: () => handleModeChange("random",2) },
+  { label: 'Minimax', mode: 'minimax', onClick: () => handleModeChange("minimax",2) }
 ];
 
 
