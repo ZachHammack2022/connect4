@@ -7,7 +7,7 @@ import BottomNavBar from './components/BottomNavBar';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import "./App.css"
-import {LeaderboardEntry } from './interfaces/interfaces';
+import {LeaderboardEntry, MoveSuccessResponse } from './interfaces/interfaces';
 import { useFetchLeaderboard,useChangeMode,useFetchGameState,useHandleColumnClick,useResetGame,useSubmitGameResult } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
 import { ThemeProvider } from '@mui/material/styles';
@@ -62,14 +62,15 @@ function App() {
         console.log(player===1)
         console.log(player===2)
         try {
-            const data = await handleChangeMode(newMode,player);
-            console.log(data)
+            const response = await handleChangeMode(newMode,player);
+            console.log(response)
             if (player === 1){
               setMode1(newMode);
             }
             else if (player === 2){
               setMode2(newMode);
             }
+            updateGame(response)
         } catch (error) {
             console.log(`Error while changing mode for player ${player}: ${error}`);
         }
@@ -86,19 +87,23 @@ function App() {
             }  
       try {
             const moveResponse = await handleColumnClick(column);
-            updateGameBoard(moveResponse.board);
-            setCurrentPlayer(moveResponse.current_player);
-            if (moveResponse.done) {
-                setGameOver(true);
-                setWinner(moveResponse.winner || null);
-                if (moveResponse.winner) {
-                    handleSubmitGameResult(moveResponse.winner === 'X');
-                }
-            }
+            updateGame(moveResponse)
         } catch (error) {
             setError(`Error while making a move: ${error}`);
         }
     };
+
+    const updateGame = (moveResponse:MoveSuccessResponse) => {
+      updateGameBoard(moveResponse.board);
+      setCurrentPlayer(moveResponse.current_player);
+      if (moveResponse.done) {
+          setGameOver(true);
+          setWinner(moveResponse.winner || null);
+          if (moveResponse.winner) {
+              handleSubmitGameResult(moveResponse.winner === 'X');
+          }
+      }
+    }
 
     const onResetGame = async () => {
         try {
