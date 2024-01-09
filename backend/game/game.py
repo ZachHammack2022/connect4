@@ -17,7 +17,7 @@ class Connect4Env(gym.Env):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
         self.action_space = spaces.Discrete(self.NUM_MOVES)
-        self.observation_space = spaces.Box(low=0, high=1, shape=(42,), dtype=float)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
         self.player_modes = {
@@ -170,7 +170,7 @@ class Connect4Env(gym.Env):
                 if cell == ' ':
                     flat_board.append(0)
                 elif cell == 'X':
-                    flat_board.append(0.5)
+                    flat_board.append(-1)
                 else:  # 'O'
                     flat_board.append(1)
 

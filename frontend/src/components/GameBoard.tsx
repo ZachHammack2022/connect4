@@ -44,7 +44,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             backgroundColor = hoveredColumn === columnIndex
                 ? theme.palette.action.hover // Use a theme color for hovered column
                 : theme.palette.background.paper; // Use theme background color for empty cell
-        } else if (cell === 0.5) {
+        } else if (cell === -1) {
             backgroundColor = 'red'; // Player X
         } else {
             backgroundColor = 'yellow'; // Player O
@@ -98,44 +98,43 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
 
         return (
-            <>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}/>
-                    </Grid>
-                    <div>
-                        <div style={{ paddingRight: '20px',paddingLeft: '20px'  }}>
-                        {gameStatusDisplay()}
-                            <div style={{border:border}}>
-                            {board.map((row, rowIndex) => (
-                                <div key={rowIndex} style={{ display: 'flex' }}>
-                                    {row.map((cell, columnIndex) => (
-                                        <div 
-                                            key={`${rowIndex}-${columnIndex}`}
-                                            tabIndex={0}
-                                            onClick={() => handleColumnClick(columnIndex)}
-                                            onKeyDown={(event) => handleKeyDown(event, columnIndex)}
-                                            onMouseEnter={() => handleMouseEnter(columnIndex)}
-                                            onMouseLeave={handleMouseLeave}
-                                            style={getCellStyle(columnIndex, cell)}
-                                            aria-label={`Column ${columnIndex}`}
-                                        >
-                                            {cell !== 0 && (cell === 0.5 ? 'X' : 'O')}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}/>
+                </Grid>
+                <div>
+                    <div style={{ paddingRight: '20px',paddingLeft: '20px'  }}>
+                    {gameStatusDisplay()}
+                        <div style={{border:border}}>
+                        {board.map((row, rowIndex) => (
+                            <div key={rowIndex} style={{ display: 'flex' }}>
+                                {row.map((cell, columnIndex) => (
+                                    <div 
+                                        key={`${rowIndex}-${columnIndex}`}
+                                        tabIndex={0}
+                                        onClick={() => handleColumnClick(columnIndex)}
+                                        onKeyDown={(event) => handleKeyDown(event, columnIndex)}
+                                        onMouseEnter={() => handleMouseEnter(columnIndex)}
+                                        onMouseLeave={handleMouseLeave}
+                                        style={getCellStyle(columnIndex, cell)}
+                                        aria-label={`Column ${columnIndex}`}
+                                    >
+                                        {cell !== 0 && (cell === -1 ? 'X' : 'O')}
+                                    </div>
+                                ))}
                             </div>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                            <UnderGameBar resetGame={resetGame} />
+                        ))}
                         </div>
                     </div>
-                    <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <ModeButtonGroup buttons={buttons2} currentMode={currentMode2}/>
-                    </Grid>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <UnderGameBar resetGame={resetGame} />
+                    </div>
                 </div>
-            </>
+                <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <ModeButtonGroup buttons={buttons2} currentMode={currentMode2}/>
+                </Grid>
+            </div>
+
         );
             
 };
