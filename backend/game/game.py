@@ -160,8 +160,6 @@ class Connect4Env(gym.Env):
                 break
 
     def _get_obs(self):
-        # Using 1 for 'X' and 2 for 'O' as current player
-        # current_player_num = 0 if self.current_player == 'X' else 1
 
         # Flatten the board into a 1D array and prepend the current player
         flat_board = []
