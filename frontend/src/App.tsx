@@ -131,6 +131,7 @@ function App() {
       board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
     }
     setBoard(board2D);
+    console.log(board)
   };
 
 

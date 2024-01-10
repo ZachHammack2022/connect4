@@ -61,7 +61,6 @@ class Connect4Env(gym.Env):
         if self.terminated:
             return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
         
-        # Make the move for the current player
         self._make_move(action)
         
         # Check if the move resulted in a win
@@ -88,6 +87,8 @@ class Connect4Env(gym.Env):
         ai_action = await ai_player.make_move(ai_observation)
 
         # Call the step function again for the AI's move
+        if not self._is_valid_action(ai_action):
+            return
         obs, reward, self.terminated, info = self.step(ai_action)
 
         return (obs, reward, self.terminated, info)
@@ -173,6 +174,20 @@ class Connect4Env(gym.Env):
                     flat_board.append(1)
 
         return flat_board
+    
+    def reconstruct_board(self,flat_board):
+        rows, cols = 6, 7
+        board = []
+
+        for i in range(rows):
+            row = flat_board[i * cols:(i + 1) * cols]
+            board.append(row)
+
+        return board
+    
+    def convert_to_symbols(self,board):
+        symbol_map = {-1: 'X', 0: ' ', 1: 'O'}
+        return [[symbol_map[cell] for cell in row] for row in board]
 
     def _is_valid_action(self, action):
         return self.board[0][action] == ' ' 
@@ -199,7 +214,7 @@ class Connect4Env(gym.Env):
 async def main():
     # Initialize players
     player1 = "human"
-    player2 = "human"
+    player2 = "minimax"
 
     # Set up the game environment
     env = Connect4Env(player1, player2)
@@ -213,13 +228,18 @@ async def main():
         # Check if the current player is human and requires input
         if isinstance(current_player, HumanPlayer):
             observation = env._get_obs()
+            new_board = env.convert_to_symbols(env.reconstruct_board(observation))
+            if env.board != new_board:
+                print(env.board,new_board)
+                print("error, not the same as board")
             action = await current_player.make_move(observation)
             _, reward, terminated, _ = await env.play_turn(action)
         else:
             # If the current player is AI, play_turn will handle it
             # No need to get a specific action, just pass None
             _, reward, terminated, _ = await env.play_turn(None)
-
+        print(env.board)
+        print([env._is_valid_action(action) for action in [0,1,2,3,4,5,6]])
         env.render()
 
         if env.terminated:
