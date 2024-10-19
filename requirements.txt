@@ -2,7 +2,6 @@ annotated-types==0.6.0
 anyio==3.7.1
 click==8.1.7
 cloudpickle==3.0.0
--e git+ssh://git@github.com/ZachHammack2022/connect4.git@fc58129c2ea6a1294511c4f9d7dd43bab9c327fd#egg=connect4_project
 contourpy==1.2.0
 cycler==0.12.1
 exceptiongroup==1.2.0
