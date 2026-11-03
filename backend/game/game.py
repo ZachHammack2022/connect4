@@ -1,5 +1,5 @@
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import random
 import asyncio
 from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal, find_winning_line

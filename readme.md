@@ -42,8 +42,13 @@ docker compose up <service>
 From the repository root:
 
 ```bash
-python -m unittest backend.game.env_testing backend.test_api
+pip install -e ".[dev]"
+python -m unittest backend.game.env_testing backend.test_api backend.test_leaderboard
 ```
+
+The leaderboard tests need Postgres and are skipped unless `TEST_DATABASE_URL` is set (they clear the `games` table, so don't point them at real data). CI runs everything, including the frontend build, on every pull request.
+
+To train the RL agents in `rl_agent/`, install the extra training dependencies with `pip install -e ".[rl]"`.
 
 ### API
 | Method | Path | Description |
