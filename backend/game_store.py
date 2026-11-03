@@ -2,7 +2,7 @@
 
 Both stores share one interface:
 
-    game_id, game = await store.create()
+    game_id, game = await store.create("tictactoe")
     async with store.open(game_id) as game:   # raises GameNotFound
         ...                                    # exclusive access; saved on exit
 
@@ -21,7 +21,8 @@ from typing import AsyncIterator
 
 from databases import Database
 
-from backend.game.game import Connect4Env
+from backend.game.base import TurnBasedGame
+from backend.game.registry import GAME_TYPES, DEFAULT_GAME_TYPE, game_from_dict
 
 
 class GameNotFound(KeyError):
@@ -32,7 +33,7 @@ class GameNotFound(KeyError):
 
 @dataclass
 class GameSession:
-    game: Connect4Env
+    game: TurnBasedGame
     # Serialises requests for one game so moves from overlapping requests
     # (double clicks, multiple tabs) can't interleave.
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
@@ -50,15 +51,15 @@ class MemoryGameStore:
     def __len__(self):
         return len(self._sessions)
 
-    async def create(self) -> tuple[str, Connect4Env]:
+    async def create(self, game_type: str = DEFAULT_GAME_TYPE) -> tuple[str, TurnBasedGame]:
         self._evict(make_room=True)
         game_id = uuid.uuid4().hex
-        session = GameSession(Connect4Env())
+        session = GameSession(GAME_TYPES[game_type]())
         self._sessions[game_id] = session
         return game_id, session.game
 
     @asynccontextmanager
-    async def open(self, game_id: str) -> AsyncIterator[Connect4Env]:
+    async def open(self, game_id: str) -> AsyncIterator[TurnBasedGame]:
         session = self._get(game_id)
         async with session.lock:
             yield session.game
@@ -109,14 +110,14 @@ class PostgresGameStore:
         self.database = database
         self.idle_timeout_hours = idle_timeout_hours
 
-    async def create(self) -> tuple[str, Connect4Env]:
+    async def create(self, game_type: str = DEFAULT_GAME_TYPE) -> tuple[str, TurnBasedGame]:
         # Clean up abandoned games as new ones are started.
         await self.database.execute(
             "DELETE FROM game_sessions WHERE updated_at < now() - make_interval(hours => :hours)",
             {"hours": self.idle_timeout_hours},
         )
         game_id = uuid.uuid4().hex
-        game = Connect4Env()
+        game = GAME_TYPES[game_type]()
         await self.database.execute(
             "INSERT INTO game_sessions (id, state) VALUES (:id, CAST(:state AS JSONB))",
             {"id": game_id, "state": json.dumps(game.to_dict())},
@@ -124,7 +125,7 @@ class PostgresGameStore:
         return game_id, game
 
     @asynccontextmanager
-    async def open(self, game_id: str) -> AsyncIterator[Connect4Env]:
+    async def open(self, game_id: str) -> AsyncIterator[TurnBasedGame]:
         async with self.database.transaction():
             row = await self.database.fetch_one(
                 "SELECT state FROM game_sessions WHERE id = :id FOR UPDATE", {"id": game_id}
@@ -132,7 +133,7 @@ class PostgresGameStore:
             if row is None:
                 raise GameNotFound(game_id)
             state = row["state"]
-            game = Connect4Env.from_dict(json.loads(state) if isinstance(state, str) else state)
+            game = game_from_dict(json.loads(state) if isinstance(state, str) else state)
             yield game
             # Only reached if the request didn't raise; an error rolls back.
             await self.database.execute(

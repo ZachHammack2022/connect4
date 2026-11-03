@@ -13,6 +13,6 @@ class RandomPlayer(AIPlayer):
     def __init__(self, difficulty=None, name="random", display_name="Random"):
         super().__init__(name=name, display_name=display_name)
 
-    async def make_move(self, obs):
-        moves = valid_moves(obs)
+    async def make_move(self, obs, legal_moves=None):
+        moves = legal_moves if legal_moves is not None else valid_moves(obs)
         return random.choice(moves) if moves else None

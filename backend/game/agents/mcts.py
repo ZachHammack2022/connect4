@@ -108,7 +108,7 @@ class MCTSPlayer(AIPlayer):
         self.iterations = settings["iterations"]
         self.time_limit = settings["time_limit"]
 
-    async def make_move(self, obs):
+    async def make_move(self, obs, legal_moves=None):
         # CPU-bound search runs in a thread so other games keep being served.
         return await asyncio.to_thread(self.best_move, obs)
 

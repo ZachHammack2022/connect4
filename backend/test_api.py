@@ -49,10 +49,27 @@ class TestGameApi(unittest.TestCase):
         bad = self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'minimax', 'difficulty': 'max'})
         self.assertEqual(bad.status_code, 422)
 
+    def test_tictactoe_game(self):
+        state = self.client.post('/games', json={'game_type': 'tictactoe'}).json()
+        self.assertEqual((state['game_type'], state['rows'], state['cols']), ('tictactoe', 3, 3))
+        self.assertEqual(state['modes'], ['human', 'random', 'minimax'])
+        game_id = state['game_id']
+        self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'minimax', 'difficulty': 'hard'})
+        state = self.client.post(f'/games/{game_id}/move', json={'move': 4}).json()
+        self.assertEqual(sum(cell != 0 for cell in state['board']), 2)
+        self.assertEqual(state['board'][4], -1)
+        self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'move': 4}).status_code, 400)
+        self.assertEqual(self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'mcts'}).status_code, 400)
+
+    def test_default_game_is_connect4(self):
+        state = self.client.post('/games').json()
+        self.assertEqual((state['game_type'], state['rows'], state['cols']), ('connect4', 6, 7))
+
     def test_invalid_requests(self):
         game_id = self.new_game()['game_id']
         self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'column': -1}).status_code, 422)
-        self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'column': 7}).status_code, 422)
+        self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'column': 7}).status_code, 400)
+        self.assertEqual(self.client.post('/games', json={'game_type': 'chess'}).status_code, 422)
         self.assertEqual(self.client.post(f'/games/{game_id}/mode', json={'player': 1, 'mode': 'bogus'}).status_code, 400)
 
     def test_reset_with_ai_first(self):

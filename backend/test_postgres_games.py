@@ -50,6 +50,15 @@ class TestPostgresGames(unittest.TestCase):
         self.assertEqual(after, before)
         self.assertEqual((after['mode2'], after['difficulty2']), ('minimax', 'easy'))
 
+    def test_tictactoe_game_survives_restart(self):
+        game_id = self.client.post('/games', json={'game_type': 'tictactoe'}).json()['game_id']
+        before = self.client.post(f'/games/{game_id}/move', json={'move': 4}).json()
+        self.client.__exit__(None, None, None)
+        self.client = self.start_client()
+        after = self.client.get(f'/games/{game_id}').json()
+        self.assertEqual(after, before)
+        self.assertEqual((after['game_type'], len(after['board'])), ('tictactoe', 9))
+
     def test_play_to_a_win_and_reset(self):
         game_id = self.new_game()
         for column in [0, 1, 0, 1, 0, 1]:

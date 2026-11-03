@@ -2,232 +2,62 @@ import gymnasium as gym
 from gymnasium import spaces
 import random
 import asyncio
-from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal, find_winning_line
+from backend.game.base import TurnBasedGame
+from backend.game.connect4_logic import find_winning_line
 from backend.game.agents.random import RandomPlayer
 from backend.game.agents.human import HumanPlayer
 from backend.game.agents.mcts import MCTSPlayer
 from backend.game.agents.dqn import DQNPlayer
-from backend.game.agents.player import AIPlayer
 from backend.game.agents.minimax import MinimaxPlayer
 
-class Connect4Env(gym.Env):
-    def __init__(self,player1='human',player2 ='human'):
-        super(Connect4Env, self).__init__()
-        self.NUM_MOVES = 7
-        self.board = [[' ' for _ in range(7)] for _ in range(6)]
-        self.current_player = 'X'
-        self.action_space = spaces.Discrete(self.NUM_MOVES)
-        self.observation_space = spaces.Box(low=-1, high=1, shape=(42,), dtype=float)
-        self.terminated = False
-        self.winner = None
-        self.winning_cells = []
-        self.player_modes = {
-            'human': HumanPlayer,
-            'random': RandomPlayer,
-            'dqn': DQNPlayer,
-            'mcts': MCTSPlayer,
-            'minimax': MinimaxPlayer
-        }
-        player1class = self.player_modes[player1]
-        player2class = self.player_modes[player2]
+class Connect4Env(TurnBasedGame, gym.Env):
+    game_type = "connect4"
+    ROWS, COLS = 6, 7
+    NUM_MOVES = 7
+    player_modes = {
+        'human': HumanPlayer,
+        'random': RandomPlayer,
+        'dqn': DQNPlayer,
+        'mcts': MCTSPlayer,
+        'minimax': MinimaxPlayer,
+    }
 
-        self.player1 = player1class()
-        self.player2 = player2class()
-        
+    def __init__(self, player1='human', player2='human'):
+        gym.Env.__init__(self)
+        TurnBasedGame.__init__(self, player1, player2)
+        self.action_space = spaces.Discrete(self.NUM_MOVES)
+        self.observation_space = spaces.Box(low=-1, high=1, shape=(self.ROWS * self.COLS,), dtype=float)
+
     def seed(self, seed=None):
         random.seed(seed)
-    
-    async def set_mode(self, player_number, player_mode, difficulty=None):
-        if player_mode not in self.player_modes:
-            raise ValueError(f"Invalid player type: {player_mode}")
-        if player_number not in (1, 2):
-            raise ValueError("Invalid player number")
 
-        player = self.player_modes[player_mode](difficulty=difficulty)
-        if player_number == 1:
-            self.player1 = player
-        else:
-            self.player2 = player
+    @property
+    def num_actions(self):
+        return self.NUM_MOVES
 
-        # If the newly selected player is an AI whose turn it is, let it move.
-        await self.run_ai_turns()
+    def _is_valid_action(self, action):
+        return isinstance(action, int) and 0 <= action < self.NUM_MOVES and self.board[0][action] == ' '
 
-    def step(self, action):
-        # Check if the game is already terminated
-        if self.terminated:
-            return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
-
-        # Check if action is valid
-        if not self._is_valid_action(action):
-            return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}
-
-        self._make_move(action)
-
-        # Check if the move resulted in a win
-        won = self.check_winner(self.current_player)
-        if won:
-            self.winner = self.current_player
-            self.winning_cells = find_winning_line(self.board, self.current_player)
-            self.terminated = True
-            reward = 100
-        else:
-            reward = 0.01
-            self.terminated = self._is_board_full()
-            if not self.terminated:
-                # Switch player only if no win and the board is not full
-                self.switch_player()
-
-        # Return the updated game state
-        return self._get_obs(), reward, self.terminated, {"winner": self.winner}
-
-    async def ai_move(self, ai_player):
-        ai_action = await ai_player.make_move(self._get_obs())
-
-        # Never let a misbehaving agent stall or crash the game: fall back to
-        # a random legal column if it returns something illegal.
-        if ai_action is None or not self._is_valid_action(ai_action):
-            ai_action = random.choice(self.valid_actions())
-
-        return self.step(ai_action)
-
-    def get_ai_player(self):
-        """Return the AI whose turn it is, or None if it is a human's turn."""
-        player = self.player1 if self.current_player == 'X' else self.player2
-        return player if isinstance(player, AIPlayer) else None
-
-    def check_if_ai_move(self):
-        return self.get_ai_player() is not None
-
-    async def run_ai_turns(self):
-        """Play AI moves until it is a human's turn or the game ends."""
-        result = (self._get_obs(), 0, self.terminated, {"winner": self.winner})
-        while not self.terminated:
-            ai_player = self.get_ai_player()
-            if ai_player is None:
-                break
-            result = await self.ai_move(ai_player)
-        return result
-
-    async def play_turn(self, action):
-        self.step(action)
-        return await self.run_ai_turns()
-
-    async def reset_and_start(self):
-        """Reset the board and, if player 1 is an AI, let it make its opening move."""
-        self.reset()
-        await self.run_ai_turns()
-        return self._get_obs()
-
-    def reset(self):
-        self.board = [[' ' for _ in range(7)] for _ in range(6)]
-        self.current_player = 'X'
-        self.terminated = False
-        self.winner = None
-        self.winning_cells = []
-        return self._get_obs()
-
-    def to_dict(self):
-        """Serialisable snapshot of the game, used to store it in the database."""
-        return {
-            "board": self.board,
-            "current_player": self.current_player,
-            "terminated": self.terminated,
-            "winner": self.winner,
-            "winning_cells": self.winning_cells,
-            "players": [
-                {"mode": player.name, "difficulty": player.difficulty}
-                for player in (self.player1, self.player2)
-            ],
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        players = data["players"]
-        game = cls()
-        game.player1 = game.player_modes[players[0]["mode"]](difficulty=players[0]["difficulty"])
-        game.player2 = game.player_modes[players[1]["mode"]](difficulty=players[1]["difficulty"])
-        game.board = [list(row) for row in data["board"]]
-        game.current_player = data["current_player"]
-        game.terminated = data["terminated"]
-        game.winner = data["winner"]
-        game.winning_cells = data["winning_cells"]
-        return game
-
-    def switch_player(self):
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
-# Only functions above this line should change
-#------------------------------------#
-    def render(self, mode='human', close=False):
-        if close:
-            return
-        print(" 0 1 2 3 4 5 6")
-        for row in self.board:
-            print('|' + '|'.join(row) + '|')
-
-    def close(self):
-        pass
-
-    # Additional methods (private)
     def _make_move(self, column):
         for row in reversed(self.board):
             if row[column] == ' ':
                 row[column] = self.current_player
                 break
 
-    def _get_obs(self):
+    def find_winning_cells(self, player):
+        return find_winning_line(self.board, player)
 
-        # Flatten the board into a 1D array and prepend the current player
-        flat_board = []
-        for row in self.board:
-            for cell in row:
-                if cell == ' ':
-                    flat_board.append(0)
-                elif cell == 'X':
-                    flat_board.append(-1)
-                else:  # 'O'
-                    flat_board.append(1)
+    def close(self):
+        pass
 
-        return flat_board
-    
-    def reconstruct_board(self,flat_board):
-        rows, cols = 6, 7
-        board = []
+    def reconstruct_board(self, flat_board):
+        return [flat_board[i * self.COLS:(i + 1) * self.COLS] for i in range(self.ROWS)]
 
-        for i in range(rows):
-            row = flat_board[i * cols:(i + 1) * cols]
-            board.append(row)
-
-        return board
-    
-    def convert_to_symbols(self,board):
+    def convert_to_symbols(self, board):
         symbol_map = {-1: 'X', 0: ' ', 1: 'O'}
         return [[symbol_map[cell] for cell in row] for row in board]
 
-    def _is_valid_action(self, action):
-        return isinstance(action, int) and 0 <= action < self.NUM_MOVES and self.board[0][action] == ' '
 
-    def valid_actions(self):
-        return [action for action in range(self.NUM_MOVES) if self._is_valid_action(action)]
-
-    def _is_board_full(self):
-        return all(cell != ' ' for row in self.board for cell in row)
-
-
-    def display_board(self):
-        print(" 0 1 2 3 4 5 6")
-        for row in self.board:
-            print('|' + '|'.join(row) + '|')
-    
-    def check_winner(self,player):
- 
-        if check_horizontal(self.board,player) or \
-            check_vertical(self.board,player) or \
-            check_positive_horizontal(self.board,player) or \
-            check_negative_horizontal(self.board,player):
-            return True
-        
-        return False
-    
 async def main():
     # Initialize players
     player1 = "human"

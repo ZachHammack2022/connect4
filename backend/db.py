@@ -1,7 +1,8 @@
 from databases import Database
 
-# Idempotent schema setup, run on every startup. It also upgrades databases
-# created before usernames were unique by merging duplicate rows first.
+# Idempotent schema setup, run on every startup. It also upgrades older
+# databases: duplicate rows are merged, and the per-game `game_type` and
+# `draws` columns are added (existing rows count as Connect 4).
 SCHEMA_STATEMENTS = [
     """
     CREATE TABLE IF NOT EXISTS games (
@@ -11,19 +12,24 @@ SCHEMA_STATEMENTS = [
         losses INT NOT NULL DEFAULT 0
     )
     """,
+    "ALTER TABLE games ADD COLUMN IF NOT EXISTS game_type VARCHAR(50) NOT NULL DEFAULT 'connect4'",
+    "ALTER TABLE games ADD COLUMN IF NOT EXISTS draws INT NOT NULL DEFAULT 0",
     """
     WITH totals AS (
-        SELECT MIN(id) AS keep_id, username, SUM(wins) AS wins, SUM(losses) AS losses
-        FROM games GROUP BY username HAVING COUNT(*) > 1
+        SELECT MIN(id) AS keep_id, SUM(wins) AS wins, SUM(losses) AS losses, SUM(draws) AS draws
+        FROM games GROUP BY username, game_type HAVING COUNT(*) > 1
     )
-    UPDATE games g SET wins = t.wins, losses = t.losses
+    UPDATE games g SET wins = t.wins, losses = t.losses, draws = t.draws
     FROM totals t WHERE g.id = t.keep_id
     """,
     """
     DELETE FROM games g USING games other
-    WHERE g.username = other.username AND g.id > other.id
+    WHERE g.username = other.username AND g.game_type = other.game_type AND g.id > other.id
     """,
-    "CREATE UNIQUE INDEX IF NOT EXISTS games_username_key ON games (username)",
+    # Usernames used to be unique across all games; now per game type.
+    "ALTER TABLE games DROP CONSTRAINT IF EXISTS games_username_key",
+    "DROP INDEX IF EXISTS games_username_key",
+    "CREATE UNIQUE INDEX IF NOT EXISTS games_username_game_type_key ON games (username, game_type)",
 ]
 
 

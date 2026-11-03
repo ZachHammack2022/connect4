@@ -1,18 +1,24 @@
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, HTTPException
-from backend.types.game_types import Move
+from typing import Optional
+
+from backend.types.game_types import Move, NewGame
 from backend.types.api_types import ModeChangeInput
 from backend.dependencies import get_game_store
 from backend.game_store import GameNotFound
-from backend.game.game import Connect4Env
+from backend.game.base import TurnBasedGame
 
 router = APIRouter(prefix="/games")
 
 
-def game_state(game_id: str, game: Connect4Env):
+def game_state(game_id: str, game: TurnBasedGame):
     return {
         "game_id": game_id,
+        "game_type": game.game_type,
+        "rows": game.ROWS,
+        "cols": game.COLS,
+        "modes": list(game.player_modes),
         "board": game._get_obs(),
         "done": game.terminated,
         "winner": game.winner,
@@ -36,8 +42,9 @@ async def open_game(game_id: str):
 
 
 @router.post("")
-async def create_game():
-    game_id, game = await get_game_store().create()
+async def create_game(new_game: Optional[NewGame] = None):
+    game_type = (new_game or NewGame()).game_type
+    game_id, game = await get_game_store().create(game_type)
     return game_state(game_id, game)
 
 
@@ -54,9 +61,9 @@ async def make_move(game_id: str, move: Move):
             raise HTTPException(status_code=400, detail="The game is over. Reset the game to play again.")
         if game.check_if_ai_move():
             raise HTTPException(status_code=400, detail="It is not a human player's turn.")
-        if not game._is_valid_action(move.column):
-            raise HTTPException(status_code=400, detail="Invalid action, column full.")
-        await game.play_turn(move.column)
+        if not game._is_valid_action(move.move):
+            raise HTTPException(status_code=400, detail="Invalid move.")
+        await game.play_turn(move.move)
         return game_state(game_id, game)
 
 
