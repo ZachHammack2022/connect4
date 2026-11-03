@@ -40,7 +40,7 @@ const SeatCard: React.FC<SeatCardProps> = ({
     disabled, onModeChange, onDifficultyChange,
 }) => {
     const modeLabel = modes.find((m) => m.mode === mode)?.label ?? mode;
-    const who = mode === 'human' ? (playerName || 'Human') : `${modeLabel} AI`;
+    const who = mode === 'human' ? (playerName || 'Human') : /\bAI$/.test(modeLabel) ? modeLabel : `${modeLabel} AI`;
     const classes = ['seat', `seat-${side}`, active ? 'is-active' : '', won ? 'is-winner' : ''].filter(Boolean).join(' ');
 
     return (

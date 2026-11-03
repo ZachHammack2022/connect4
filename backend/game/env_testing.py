@@ -413,3 +413,70 @@ class TestHints(unittest.IsolatedAsyncioTestCase):
         for move in [0, 3, 1, 4, 2]:
             env.step(move)
         self.assertIsNone(await env.hint())
+
+
+class TestGomoku(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        from backend.game.gomoku import GomokuEnv
+        self.Env = GomokuEnv
+
+    def play(self, env, moves):
+        for move in moves:
+            env.step(move)
+
+    def test_wins_in_all_four_directions(self):
+        lines = {
+            'row': [7 * 15 + c for c in range(3, 8)],
+            'column': [r * 15 + 4 for r in range(2, 7)],
+            'diagonal': [(2 + k) * 15 + (2 + k) for k in range(5)],
+            'anti-diagonal': [(2 + k) * 15 + (12 - k) for k in range(5)],
+        }
+        filler = [i for i in range(225) if all(i not in line for line in lines.values())]
+        for name, line in lines.items():
+            env = self.Env()
+            # X plays the line; O plays far-away cells in between.
+            o_moves = [m for m in reversed(filler) if m // 15 > 11][:4]
+            for k in range(5):
+                env.step(line[k])
+                if k < 4:
+                    env.step(o_moves[k])
+            self.assertTrue(env.terminated, name)
+            self.assertEqual(env.winner, 'X', name)
+            self.assertEqual(len(env.winning_cells), 5, name)
+
+    def test_four_is_not_enough_and_overlines_win(self):
+        env = self.Env()
+        self.play(env, [0, 200, 1, 201, 2, 202, 4, 203, 5, 220])
+        self.assertFalse(env.terminated)
+        env.step(3)   # X: 0-1-2-3-4-5, six in a row
+        self.assertEqual(env.winner, 'X')
+        self.assertEqual(len(env.winning_cells), 6)
+
+    async def test_ai_completes_five(self):
+        from backend.game.agents.gomoku_ai import GomokuPlayer
+        env = self.Env()
+        self.play(env, [112, 0, 113, 1, 114, 30, 115, 220])  # X has 112-115 (row 7, cols 7-10)
+        move = await GomokuPlayer(difficulty="medium").make_move(env._get_obs())
+        self.assertIn(move, [111, 116])
+
+    async def test_ai_blocks_four(self):
+        from backend.game.agents.gomoku_ai import GomokuPlayer
+        env = self.Env()
+        # X threatens 112-115 with 111 already blocked by O; O must take 116.
+        self.play(env, [112, 111, 113, 0, 114, 1, 115])
+        for difficulty in ("medium", "hard"):
+            move = await GomokuPlayer(difficulty=difficulty).make_move(env._get_obs())
+            self.assertEqual(move, 116, difficulty)
+
+    async def test_ai_blocks_a_gapped_four(self):
+        from backend.game.agents.gomoku_ai import GomokuPlayer
+        env = self.Env()
+        self.play(env, [110, 0, 111, 1, 113, 2, 114])  # X X _ X X on row 7
+        self.assertEqual(await GomokuPlayer(difficulty="medium").make_move(env._get_obs()), 112)
+
+    async def test_hard_ai_beats_random(self):
+        env = self.Env('heuristic', 'random')
+        await env.set_mode(1, 'heuristic', 'hard')
+        await env.reset_and_start()
+        self.assertTrue(env.terminated)
+        self.assertEqual(env.winner, 'X')

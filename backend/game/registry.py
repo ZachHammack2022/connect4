@@ -2,11 +2,13 @@
 from backend.game.game import Connect4Env
 from backend.game.tictactoe import TicTacToeEnv
 from backend.game.reversi import ReversiEnv
+from backend.game.gomoku import GomokuEnv
 
 GAME_TYPES = {
     Connect4Env.game_type: Connect4Env,
     TicTacToeEnv.game_type: TicTacToeEnv,
     ReversiEnv.game_type: ReversiEnv,
+    GomokuEnv.game_type: GomokuEnv,
 }
 DEFAULT_GAME_TYPE = Connect4Env.game_type
 
