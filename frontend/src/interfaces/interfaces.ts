@@ -40,7 +40,23 @@ export interface GameState {
     history: MoveRecord[];
     // A human used undo this game, so its result won't be recorded.
     assisted: boolean;
+    // Online games only: who sits where, and which seat (if any) is yours.
+    online?: OnlineInfo | null;
 }
+
+export interface OnlineSeat {
+    name: string | null;
+    taken: boolean;
+    connected: boolean;
+}
+
+export interface OnlineInfo {
+    seats: Record<'X' | 'O', OnlineSeat>;
+    you: 'X' | 'O' | null;
+}
+
+// Creating or joining an online game also returns your seat's secret token.
+export type SeatedGameState = GameState & { seat_token: string | null };
 
 export interface MoveRecord {
     player: 'X' | 'O';

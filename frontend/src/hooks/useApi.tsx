@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Difficulty, GameState, LeaderboardEntry, LeaderboardFilter, OpponentSummary, Outcome } from '../interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry, LeaderboardFilter, OpponentSummary, Outcome, SeatedGameState } from '../interfaces/interfaces';
 
 // Extracts a readable message from an API error (FastAPI returns `{ detail }`).
 export const getErrorMessage = (error: unknown): string => {
@@ -45,13 +45,26 @@ export const createGame = async (gameType: string): Promise<GameState> => {
     return response.data;
 };
 
-export const fetchGameState = async (gameId: string): Promise<GameState> => {
-    const response = await axios.get<GameState>(`/games/${gameId}`);
+// Online players prove which seat they hold with this header.
+const seat = (token?: string | null) => (token ? { headers: { 'X-Seat-Token': token } } : {});
+
+export const fetchGameState = async (gameId: string, token?: string | null): Promise<GameState> => {
+    const response = await axios.get<GameState>(`/games/${gameId}`, seat(token));
     return response.data;
 };
 
-export const makeMove = async (gameId: string, move: number): Promise<GameState> => {
-    const response = await axios.post<GameState>(`/games/${gameId}/move`, { move });
+export const makeMove = async (gameId: string, move: number, token?: string | null): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/move`, { move }, seat(token));
+    return response.data;
+};
+
+export const createOnlineGame = async (gameType: string, name: string): Promise<SeatedGameState> => {
+    const response = await axios.post<SeatedGameState>('/games/online', { game_type: gameType, name });
+    return response.data;
+};
+
+export const joinGame = async (gameId: string, name: string, token?: string | null): Promise<SeatedGameState> => {
+    const response = await axios.post<SeatedGameState>(`/games/${gameId}/join`, { name }, seat(token));
     return response.data;
 };
 
@@ -70,7 +83,7 @@ export const getHint = async (gameId: string): Promise<GameState & { hint: numbe
     return response.data;
 };
 
-export const resetGame = async (gameId: string): Promise<GameState> => {
-    const response = await axios.post<GameState>(`/games/${gameId}/reset`);
+export const resetGame = async (gameId: string, token?: string | null): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/reset`, null, seat(token));
     return response.data;
 };

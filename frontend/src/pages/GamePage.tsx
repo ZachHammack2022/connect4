@@ -1,30 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import SeatCard, { Token } from '../components/SeatCard';
 import Leaderboard from '../components/Leaderboard';
 import NameForm from '../components/NameForm';
 import Toast from '../components/Toast';
-import { ArrowLeft, Bulb, Keyboard, Refresh, Undo } from '../components/Icons';
+import { ArrowLeft, Bulb, Keyboard, Refresh, Undo, Users } from '../components/Icons';
+import { createOnlineGame, getErrorMessage } from '../hooks/useApi';
+import { rememberSeat } from '../hooks/useOnlineGame';
 import ShortcutsPopover from '../components/ShortcutsPopover';
-import { sounds } from '../sound';
+import { useGameSounds } from '../hooks/useGameSounds';
 import MoveList from '../components/MoveList';
-import Connect4Board from '../components/boards/Connect4Board';
-import TicTacToeBoard from '../components/boards/TicTacToeBoard';
-import ReversiBoard from '../components/boards/ReversiBoard';
-import GomokuBoard from '../components/boards/GomokuBoard';
-import { BoardProps } from '../components/boards/types';
+import { BOARDS } from '../components/boards';
 import { useGameSession } from '../hooks/useGameSession';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { AvailableGame, Side } from '../games';
 import { GameState } from '../interfaces/interfaces';
 import './GamePage.css';
 
-const BOARDS: Record<string, React.FC<BoardProps>> = {
-    connect4: Connect4Board,
-    tictactoe: TicTacToeBoard,
-    reversi: ReversiBoard,
-    gomoku: GomokuBoard,
-};
 
 interface GamePageProps {
     game: AvailableGame;
@@ -135,25 +127,25 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername, muted,
         return () => window.removeEventListener('keydown', onKey);
     }, []);
 
-    // Sounds: a click for each new piece, and a jingle when the game ends.
-    const heard = useRef<{ moves: number; done: boolean } | null>(null);
-    useEffect(() => {
-        if (!state) return;
-        const moves = state.history?.length ?? 0;
-        const previous = heard.current;
-        heard.current = { moves, done: state.done };
-        // Stay quiet on the first load, and when moves are taken back.
-        if (!previous || muted || moves < previous.moves) return;
-        if (moves > previous.moves) {
-            const last = state.history[moves - 1];
-            sounds.place(last.player);
+    useGameSounds(state, humanSide, muted);
+
+    // Start an online game and go to it; the invite link is shown there.
+    const navigate = useNavigate();
+    const [startingOnline, setStartingOnline] = useState(false);
+    const [onlineError, setOnlineError] = useState<string | null>(null);
+    const { clearError } = session;
+    const clearErrors = useCallback(() => { clearError(); setOnlineError(null); }, [clearError]);
+    const playOnline = async () => {
+        setStartingOnline(true);
+        try {
+            const created = await createOnlineGame(game.id, username || 'Player 1');
+            if (created.seat_token) rememberSeat(created.game_id, created.seat_token);
+            navigate(`/play/${created.game_id}`);
+        } catch (err) {
+            setOnlineError(`Couldn’t start an online game: ${getErrorMessage(err)}`);
+            setStartingOnline(false);
         }
-        if (state.done && !previous.done) {
-            const tune = !state.winner ? sounds.draw
-                : humanSide && state.winner !== humanSide ? sounds.loss : sounds.win;
-            window.setTimeout(tune, 180);
-        }
-    }, [state, muted, humanSide]);
+    };
 
     const pageStyle = {
         '--x-color': game.sideColors.X,
@@ -173,6 +165,9 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername, muted,
                     <h1>{game.name}</h1>
                     <p>{game.tagline}</p>
                 </div>
+                <button type="button" className="btn btn-outline play-online" onClick={playOnline} disabled={startingOnline}>
+                    {startingOnline ? <span className="spinner" /> : <Users />} Play a friend online
+                </button>
             </div>
 
             <section className="card play-area" aria-label={`${game.name} game`}>
@@ -271,7 +266,7 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername, muted,
                     </>
                 )}
             />
-            <Toast message={session.error} onClose={session.clearError} />
+            <Toast message={session.error ?? onlineError} onClose={clearErrors} />
         </div>
     );
 };

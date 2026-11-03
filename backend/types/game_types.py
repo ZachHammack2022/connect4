@@ -18,3 +18,11 @@ class NewGame(BaseModel):
         if value not in GAME_TYPES:
             raise ValueError(f"Unknown game type: {value}")
         return value
+
+
+class NewOnlineGame(NewGame):
+    name: str = Field(default="Player 1", min_length=1, max_length=255)
+
+
+class JoinGame(BaseModel):
+    name: str = Field(default="Player 2", min_length=1, max_length=255)
