@@ -1,55 +1,105 @@
-/* Disc size comes from --cell/--gap, set on the game page layout. */
-.c4-board {
+/* Sizes scale with the board's container (see .board-stage). */
+.c4 {
+    --cell: min(58px, calc((100cqi - 8px) / 8.3));
+    --gap: calc(var(--cell) * 0.16);
     display: inline-flex;
     flex-direction: column;
-    gap: var(--gap);
-    padding: var(--gap);
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-    overflow: hidden; /* clip discs while they drop in from above */
+    align-items: center;
+}
+@supports not (width: 1cqi) {
+    .c4 { --cell: min(58px, calc((100vw - 72px) / 8.3)); }
 }
 
-.c4-row {
+.c4-hover-row {
     display: flex;
     gap: var(--gap);
+    padding: 0 calc(var(--gap) * 1.25);
+    height: calc(var(--cell) + var(--gap));
+}
+.c4-hover-slot {
+    width: var(--cell);
+    height: var(--cell);
+    display: grid;
+    place-items: center;
+}
+.board-active .c4-hover-slot { cursor: pointer; }
+.c4-hover-row .disc { width: 100%; height: 100%; border-radius: 50%; }
+.c4-hover-row .hovering { animation: hover-bob 1.4s ease-in-out infinite; }
+@keyframes hover-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }
 
-.c4-board .hole {
+.c4-board {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    padding: calc(var(--gap) * 1.25);
+    border-radius: calc(var(--cell) * 0.36);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 40%),
+        linear-gradient(180deg, #3e5cff, #2337c9);
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.25),
+        inset 0 -4px 0 rgba(0, 0, 0, 0.25),
+        0 30px 60px -20px rgba(35, 55, 201, 0.55),
+        0 12px 24px -12px rgba(0, 0, 0, 0.5);
+}
+
+.c4-row { display: flex; gap: var(--gap); }
+
+.c4 .hole {
+    position: relative;
     width: var(--cell);
     height: var(--cell);
     border-radius: 50%;
-    background: #0f172a;
-    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5);
-    transition: opacity 0.3s, box-shadow 0.3s, transform 0.3s;
+    background: var(--bg);
+    box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: opacity 0.3s, filter 0.3s, transform 0.3s var(--ease-out), background-color 0.2s;
 }
-.c4-board.board-active .hole { cursor: pointer; }
-.c4-board .hole:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.c4 .hole.col-hover:not(.disc) { background: color-mix(in srgb, var(--bg) 82%, #fff); }
+.board-active .hole { cursor: pointer; }
+.c4 .hole:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
-.c4-board .disc-red { background: radial-gradient(circle at 35% 35%, #f87171, #dc2626 60%, #991b1b); }
-.c4-board .disc-yellow { background: radial-gradient(circle at 35% 35%, #fde047, #eab308 60%, #a16207); }
+/* A disc: glossy face with a raised inner ring. */
+.c4 .disc {
+    --disc: var(--x-color);
+    background:
+        radial-gradient(circle at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.16) 53%, rgba(0, 0, 0, 0.16) 60%, transparent 61%),
+        radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--disc) 45%, #fff) 0%, var(--disc) 45%, color-mix(in srgb, var(--disc) 70%, #000) 100%);
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+.c4 .disc-O { --disc: var(--o-color); }
 
-.c4-board .preview { opacity: 0.4; }
-.c4-board .faded { filter: brightness(0.45) saturate(0.8); }
-.c4-board .winning {
-    box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255, 255, 255, 0.8);
-    transform: scale(1.06);
-    animation: pulse 1.2s ease-in-out infinite alternate;
+.c4 .preview { opacity: 0.32; }
+.c4 .faded { filter: saturate(0.4) brightness(0.55); }
+.c4 .winning {
+    transform: scale(1.08);
+    z-index: 1;
+    animation: c4-win 1.1s ease-in-out infinite alternate;
+}
+@keyframes c4-win {
+    from { box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18), 0 0 0 3px #fff, 0 0 8px 2px rgba(255, 255, 255, 0.4); }
+    to { box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18), 0 0 0 3px #fff, 0 0 22px 8px rgba(255, 255, 255, 0.75); }
 }
 
-/* Discs fall from above the board to their row. */
-.c4-board .dropping {
-    animation: drop calc(0.12s + var(--drop-rows) * 0.05s) cubic-bezier(0.5, 0, 1, 1);
+/* Discs fall from the hover row to their row, with a little bounce. */
+.c4 .dropping {
+    animation: c4-drop calc(0.22s + var(--drop-rows) * 0.045s) cubic-bezier(0.45, 0, 0.9, 0.6) both,
+        c4-bounce 0.18s ease-out calc(0.22s + var(--drop-rows) * 0.045s);
 }
-@keyframes drop {
+@keyframes c4-drop {
     from { transform: translateY(calc(var(--drop-rows) * (var(--cell) + var(--gap)) * -1)); }
     to { transform: translateY(0); }
 }
-@keyframes pulse {
-    from { box-shadow: 0 0 0 3px #fff, 0 0 6px 2px rgba(255, 255, 255, 0.5); }
-    to { box-shadow: 0 0 0 3px #fff, 0 0 18px 6px rgba(255, 255, 255, 0.9); }
+@keyframes c4-bounce {
+    0% { transform: translateY(0); }
+    45% { transform: translateY(calc(var(--cell) * -0.1)); }
+    100% { transform: translateY(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .c4-board .dropping, .c4-board .winning { animation: none; }
+/* Touch screens have no hover, so they don't need the row above the board. */
+@media (hover: none) {
+    .c4-hover-row { display: none; }
 }
-

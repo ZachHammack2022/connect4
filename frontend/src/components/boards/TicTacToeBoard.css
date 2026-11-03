@@ -1,61 +1,66 @@
-.ttt-board {
-    --ttt-cell: min(110px, calc((100vw - 48px) / 3));
+.ttt {
+    --ttt-cell: min(128px, calc((100cqi - 40px) / 3));
+    --ttt-gap: calc(var(--ttt-cell) * 0.08);
     display: inline-flex;
     flex-direction: column;
+    gap: var(--ttt-gap);
+    padding: var(--ttt-gap);
+    border-radius: calc(var(--ttt-cell) * 0.24);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}
+@supports not (width: 1cqi) {
+    .ttt { --ttt-cell: min(128px, calc((100vw - 96px) / 3)); }
 }
 
-.ttt-row { display: flex; }
+.ttt-row { display: flex; gap: var(--ttt-gap); }
 
 .ttt-cell {
+    position: relative;
     width: var(--ttt-cell);
     height: var(--ttt-cell);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    border-radius: 8px;
-    transition: background-color 0.2s, filter 0.3s;
+    display: grid;
+    place-items: center;
+    border-radius: calc(var(--ttt-cell) * 0.16);
+    background: var(--surface);
+    box-shadow: inset 0 -2px 0 var(--border), var(--shadow-sm);
+    transition: background-color 0.2s, transform 0.2s var(--ease-out), opacity 0.3s, box-shadow 0.3s;
 }
-/* Grid lines between cells only, like a hand-drawn board. */
-.ttt-row + .ttt-row .ttt-cell { border-top: 4px solid var(--ttt-line); border-top-left-radius: 0; border-top-right-radius: 0; }
-.ttt-cell + .ttt-cell { border-left: 4px solid var(--ttt-line); border-top-left-radius: 0; border-bottom-left-radius: 0; }
-.ttt-row:not(:last-child) .ttt-cell { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.ttt-cell:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-
-.board-active .ttt-cell { cursor: pointer; }
-.ttt-cell:focus-visible { outline: 3px solid #fff; outline-offset: -6px; }
+.board-active .ttt-cell.empty { cursor: pointer; }
+.board-active .ttt-cell.empty:hover { background: var(--surface-hover); transform: translateY(-2px); }
+.ttt-cell:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .ttt-mark {
-    width: 78%;
-    height: 78%;
+    width: 74%;
+    height: 74%;
     fill: none;
-    stroke-width: 12;
+    stroke-width: 13;
     stroke-linecap: round;
-    animation: ttt-pop 0.2s ease-out;
+    overflow: visible;
 }
-.ttt-x { stroke: #38bdf8; }
-.ttt-o { stroke: #f472b6; }
+.ttt-x { stroke: var(--x-color); filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--x-color) 45%, transparent)); }
+.ttt-o { stroke: var(--o-color); filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--o-color) 45%, transparent)); }
+
+/* Marks are drawn on like a pen stroke. */
+.ttt-mark.draw line, .ttt-mark.draw circle {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: ttt-draw 0.28s var(--ease-out) forwards;
+}
+.ttt-mark.draw line + line { animation-delay: 0.14s; }
+@keyframes ttt-draw { to { stroke-dashoffset: 0; } }
 
 .ttt-preview {
     position: absolute;
     inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.3;
+    display: grid;
+    place-items: center;
+    opacity: 0.25;
     pointer-events: none;
 }
-.ttt-preview .ttt-mark { animation: none; }
 
-.ttt-cell.winning { background: rgba(255, 255, 255, 0.12); }
-.ttt-cell.winning .ttt-mark { filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 4px #fff); }
-.ttt-cell.faded .ttt-mark { filter: brightness(0.45); }
-
-@keyframes ttt-pop {
-    from { transform: scale(0.4); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ttt-mark { animation: none; }
-}
+.ttt-cell.winning { transform: scale(1.04); }
+.won-by-X .ttt-cell.winning { background: color-mix(in srgb, var(--x-color) 22%, var(--surface)); box-shadow: 0 0 0 2px var(--x-color), 0 10px 30px -8px var(--x-color); }
+.won-by-O .ttt-cell.winning { background: color-mix(in srgb, var(--o-color) 22%, var(--surface)); box-shadow: 0 0 0 2px var(--o-color), 0 10px 30px -8px var(--o-color); }
+.ttt-cell.faded { opacity: 0.4; }

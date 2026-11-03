@@ -1,0 +1,307 @@
+/* Design tokens. Dark is the default; light overrides below. */
+:root {
+    --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+    --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --bg: #0a0c11;
+    --bg-elevated: #10131a;
+    --surface: #151922;
+    --surface-2: #1c2130;
+    --surface-hover: #222838;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #eef0f6;
+    --text-muted: #8d95a8;
+    --text-faint: #5e6578;
+    --accent: #8f7dff;
+    --accent-strong: #a597ff;
+    --accent-soft: rgba(143, 125, 255, 0.14);
+    --accent-ink: #ffffff;
+    --danger: #ff6b6b;
+    --success: #3ddc97;
+    --gold: #ffcf5c;
+    --silver: #c3cad8;
+    --bronze: #e09a6a;
+
+    --glow-1: rgba(143, 125, 255, 0.18);
+    --glow-2: rgba(255, 90, 95, 0.10);
+    --art-ink: rgba(255, 255, 255, 0.42);
+    --art-dot: #e8eaf0;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.5);
+
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 22px;
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+    --bg: #f5f3ee;
+    --bg-elevated: #fbfaf7;
+    --surface: #ffffff;
+    --surface-2: #f1efe9;
+    --surface-hover: #ebe8e0;
+    --border: rgba(20, 22, 30, 0.09);
+    --border-strong: rgba(20, 22, 30, 0.18);
+    --text: #14161d;
+    --text-muted: #5c6274;
+    --text-faint: #9399a8;
+    --accent: #5a45ff;
+    --accent-strong: #4732f0;
+    --accent-soft: rgba(90, 69, 255, 0.1);
+    --danger: #e03b3b;
+    --success: #12a26a;
+    --gold: #d99a00;
+    --silver: #8790a3;
+    --bronze: #b8673a;
+
+    --glow-1: rgba(90, 69, 255, 0.10);
+    --glow-2: rgba(255, 90, 95, 0.07);
+    --art-ink: rgba(20, 22, 30, 0.32);
+    --art-dot: #2a2f3d;
+
+    --shadow-sm: 0 1px 2px rgba(20, 22, 30, 0.06);
+    --shadow-md: 0 8px 24px rgba(20, 22, 30, 0.08);
+    --shadow-lg: 0 24px 60px rgba(20, 22, 30, 0.14);
+
+    color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(900px 500px at 12% -10%, var(--glow-1), transparent 60%),
+        radial-gradient(700px 420px at 100% 0%, var(--glow-2), transparent 60%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0;
+}
+
+p { margin: 0; }
+
+a { color: inherit; }
+
+button, input { font: inherit; color: inherit; }
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+::selection { background: var(--accent-soft); }
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ---- Layout ---------------------------------------------------------- */
+
+.shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+@media (max-width: 600px) {
+    .container { padding: 0 16px; }
+}
+
+main { flex: 1; }
+
+/* ---- Buttons --------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s var(--ease-out), box-shadow 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 6px 20px -6px var(--accent);
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-strong); }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+}
+.btn-ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
+
+.btn-outline {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+.btn-outline:hover:not(:disabled) { background: var(--surface-2); }
+
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+
+.icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s, background-color 0.15s, transform 0.3s var(--ease-out);
+}
+.icon-btn:hover { color: var(--text); background: var(--surface-2); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ---- Form controls ------------------------------------------------------ */
+
+.input {
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    min-width: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder { color: var(--text-faint); }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+/* Segmented control: a row of options where one is selected. */
+.segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.segmented button {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 30px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.segmented button:hover:not([aria-pressed='true']):not(:disabled) { color: var(--text); background: var(--surface-hover); }
+.segmented button[aria-pressed='true'] {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-sm), inset 0 0 0 1px var(--border-strong);
+}
+.segmented button:disabled { cursor: default; opacity: 0.6; }
+
+/* ---- Cards & chips ------------------------------------------------------ */
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

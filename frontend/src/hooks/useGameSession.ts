@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as api from './useApi';
 import { getErrorMessage, isNotFound } from './useApi';
 import { Difficulty, GameState, LeaderboardEntry, Outcome } from '../interfaces/interfaces';
@@ -22,6 +22,8 @@ export const useGameSession = (game: AvailableGame, username: string) => {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+    const clearError = useCallback(() => setError(null), []);
 
     const gameIdRef = useRef<string | null>(null);
     const busyRef = useRef(false);
@@ -134,10 +136,12 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         gameOverRef.current = false;
         setState(null);
         setLeaderboard([]);
+        setLeaderboardLoading(true);
 
         api.fetchLeaderboard(gameType)
             .then((rows) => { if (!cancelled) setLeaderboard(rows); })
-            .catch(() => { if (!cancelled) setError('Error while fetching leaderboard'); });
+            .catch(() => { if (!cancelled) setError('Couldn’t load the leaderboard.'); })
+            .finally(() => { if (!cancelled) setLeaderboardLoading(false); });
 
         const init = async () => {
             const savedId = loadGameId(gameType);
@@ -171,7 +175,7 @@ export const useGameSession = (game: AvailableGame, username: string) => {
     }, [gameType]);
 
     return {
-        state, busy, error, clearError: () => setError(null), leaderboard,
+        state, busy, error, clearError, leaderboard, leaderboardLoading,
         currentMode, humanToMove, move, changeMode, changeDifficulty, reset,
     };
 };

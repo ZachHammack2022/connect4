@@ -16,16 +16,17 @@ A full-stack web app for classic two-player board games. Play against a friend o
 
 ## Features
 - **Home menu**: Pick a game; set a name once (remembered in the browser, no account needed).
+- **Light and dark themes**: Follows the system setting until you pick one in the header.
 - **Opponent choice**: Switch either side between a human and an AI at any time, with a difficulty setting for the stronger AIs.
 - **Leaderboards**: One per game. Human-vs-AI games count wins, losses and draws, from the human's side.
 - **Per-user games**: Every browser tab plays its own game of each type. Refreshing the page resumes it. Games are stored in Postgres, so they survive backend restarts; games untouched for a day are cleaned up.
 
 ## Adding a game
 1. Backend: subclass `TurnBasedGame` (`backend/game/base.py`) with the board size, player types and rules (see `backend/game/tictactoe.py`), and add it to `backend/game/registry.py`.
-2. Frontend: add a board component in `frontend/src/components/boards/`, register it in `frontend/src/pages/GamePage.tsx`, and add the game to the catalog in `frontend/src/games.ts` (or change its status from `coming-soon`).
+2. Frontend: add a board component in `frontend/src/components/boards/`, register it in `frontend/src/pages/GamePage.tsx`, and add the game to the catalog in `frontend/src/games.ts` (or change its status from `coming-soon`), with its card tint and piece colours. Add card art in `frontend/src/components/GameArt.tsx`.
 
 ## Technology Stack
-- **Frontend**: React, TypeScript, Material UI
+- **Frontend**: React, TypeScript, hand-written CSS (design tokens in `frontend/src/styles/global.css`, light and dark themes)
 - **Backend**: Python, Pydantic
 - **Database**: PostgreSQL
 - **API Calls**: Axios, FastApi
