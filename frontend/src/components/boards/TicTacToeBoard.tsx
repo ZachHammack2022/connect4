@@ -14,7 +14,7 @@ const Mark: React.FC<{ value: number; animate?: boolean }> = ({ value, animate =
         </svg>
     );
 
-const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, lastCell, interactive, onMove }) => {
+const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, lastCell, hintCell, interactive, onMove }) => {
     const [hovered, setHovered] = useState<number | null>(null);
     const grid = toRows(board, rows, cols);
     const winner = winningCells.length > 0
@@ -40,7 +40,7 @@ const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer
                             <div
                                 key={index}
                                 className={['ttt-cell', cell === 0 ? 'empty' : '', winning ? 'winning' : '', faded ? 'faded' : '',
-                                    cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : ''].filter(Boolean).join(' ')}
+                                    cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : '', isLastCell(hintCell ?? null, r, c) ? 'hinted' : ''].filter(Boolean).join(' ')}
                                 role="gridcell"
                                 tabIndex={cell === 0 ? 0 : -1}
                                 data-cell={index}

@@ -4,7 +4,7 @@ import SeatCard, { Token } from '../components/SeatCard';
 import Leaderboard from '../components/Leaderboard';
 import NameForm from '../components/NameForm';
 import Toast from '../components/Toast';
-import { ArrowLeft, Refresh, Undo } from '../components/Icons';
+import { ArrowLeft, Bulb, Refresh, Undo } from '../components/Icons';
 import MoveList from '../components/MoveList';
 import Connect4Board from '../components/boards/Connect4Board';
 import TicTacToeBoard from '../components/boards/TicTacToeBoard';
@@ -92,8 +92,8 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
         );
     };
 
-    // Ctrl/Cmd+Z takes back a move (but not while typing in a field).
-    const { undo } = session;
+    // Ctrl/Cmd+Z takes back a move, H asks for a hint (but not while typing in a field).
+    const { undo, requestHint } = session;
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             const target = event.target as HTMLElement | null;
@@ -101,11 +101,13 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
             if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
                 event.preventDefault();
                 undo();
+            } else if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'h') {
+                requestHint();
             }
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [undo]);
+    }, [undo, requestHint]);
 
     const pageStyle = {
         '--x-color': game.sideColors.X,
@@ -163,6 +165,7 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                                     winningCells={state.winning_cells}
                                     legalMoves={state.legal_moves ?? []}
                                     lastCell={state.history?.length ? state.history[state.history.length - 1].cell : null}
+                                    hintCell={session.hintCell}
                                     interactive={session.humanToMove}
                                     onMove={session.move}
                                 />
@@ -177,10 +180,14 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                 <div className="play-footer">
                     <span className="play-hint">
                         {state?.assisted && humanSide
-                            ? <span className="chip chip-practice">Practice game: moves were undone, so this one won’t count</span>
+                            ? <span className="chip chip-practice">Practice game: you used undo or a hint, so this one won’t count</span>
                             : <>{sideNameOf('X')} moves first. Switch either side between a human and an AI at any time.</>}
                     </span>
                     <div className="play-actions">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={session.requestHint}
+                            disabled={!session.humanToMove} title="Suggest a move (H)" aria-keyshortcuts="H">
+                            {session.hinting ? <span className="spinner" /> : <Bulb />} Hint
+                        </button>
                         <button type="button" className="btn btn-ghost btn-sm" onClick={session.undo} disabled={!session.canUndo}
                             title="Undo (Ctrl+Z)" aria-keyshortcuts="Control+Z Meta+Z">
                             <Undo /> Undo

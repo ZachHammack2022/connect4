@@ -8,6 +8,8 @@ export interface BoardProps {
     legalMoves: number[];
     // Where the most recent piece went, to mark it.
     lastCell: [number, number] | null;
+    // A suggested move to highlight, if the player asked for a hint.
+    hintCell?: [number, number] | null;
     // True when a human may move now; boards show previews/pointer only then.
     interactive: boolean;
     onMove: (move: number) => void;
