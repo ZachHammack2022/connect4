@@ -15,6 +15,7 @@ export type Theme = 'light' | 'dark';
 // The player's name and theme are remembered in this browser (there are no accounts yet).
 const USERNAME_KEY = 'username';
 const THEME_KEY = 'theme';
+const MUTED_KEY = 'muted';
 const load = (key: string) => {
     try { return localStorage.getItem(key); } catch { return null; }
 };
@@ -30,6 +31,11 @@ const initialTheme = (): Theme => {
 function App() {
     const [username, setUsernameState] = useState(() => load(USERNAME_KEY) || '');
     const [theme, setTheme] = useState<Theme>(initialTheme);
+    const [muted, setMuted] = useState(() => load(MUTED_KEY) === 'true');
+    const toggleMuted = () => setMuted((prev) => {
+        save(MUTED_KEY, String(!prev));
+        return !prev;
+    });
 
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
@@ -50,14 +56,15 @@ function App() {
     return (
         <BrowserRouter>
             <div className="shell">
-                <Header username={username} theme={theme} onToggleTheme={toggleTheme} />
+                <Header username={username} theme={theme} onToggleTheme={toggleTheme} muted={muted} onToggleMuted={toggleMuted} />
                 <main>
                     <Routes>
                         <Route path="/" element={<HomePage username={username} setUsername={setUsername} />} />
                         {AVAILABLE_GAMES.map((game) => (
                             <Route key={game.id} path={game.path}
                                 // key forces a fresh page (and game session) per game type
-                                element={<GamePage key={game.id} game={game} username={username} setUsername={setUsername} />} />
+                                element={<GamePage key={game.id} game={game} username={username} setUsername={setUsername}
+                                    muted={muted} onToggleMuted={toggleMuted} />} />
                         ))}
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

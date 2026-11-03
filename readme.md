@@ -20,6 +20,7 @@ A full-stack web app for classic two-player board games. Play against a friend o
 - **Home menu**: Pick a game; set a name once (remembered in the browser, no account needed).
 - **Light and dark themes**: Follows the system setting until you pick one in the header.
 - **Undo, hints and move history**: Take back moves (Ctrl/Cmd+Z), ask for a hint (H) and follow the game in a move list. Games with undos or hints are practice and don't count.
+- **Sound and keyboard play**: Synthesized sound effects with a mute toggle (M), number keys to play (1–7 in Connect 4, a number-pad layout in tic-tac-toe), arrow keys, and a shortcuts list (?).
 - **Opponent choice**: Switch either side between a human and an AI at any time, with a difficulty setting for the stronger AIs.
 - **Leaderboards**: One per game, filterable by AI opponent and difficulty, with win streaks. Human-vs-AI games count wins, losses and draws, from the human's side.
 - **Per-user games**: Every browser tab plays its own game of each type. Refreshing the page resumes it. Games are stored in Postgres, so they survive backend restarts; games untouched for a day are cleaned up.

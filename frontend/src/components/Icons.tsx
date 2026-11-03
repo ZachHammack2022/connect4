@@ -47,3 +47,12 @@ export const Bulb = (p: IconProps) => (
 export const Flame = (p: IconProps) => (
     <Icon {...p}><path d="M12 22c4 0 7-2.7 7-6.8 0-3.4-2.3-5.9-4.3-8.2-.5 1.8-1.6 3-2.9 3.6.3-3.3-1.2-6.3-3.8-8.6.1 3-1.8 5.3-3.4 7.4A9.4 9.4 0 0 0 5 15.2C5 19.3 8 22 12 22z" /></Icon>
 );
+export const Volume = (p: IconProps) => (
+    <Icon {...p}><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></Icon>
+);
+export const VolumeOff = (p: IconProps) => (
+    <Icon {...p}><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="m22 9-6 6M16 9l6 6" /></Icon>
+);
+export const Keyboard = (p: IconProps) => (
+    <Icon {...p}><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M10 13h4M7 16h10" /></Icon>
+);
