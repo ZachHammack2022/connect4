@@ -8,7 +8,7 @@ export interface MoveSuccessResponse {
     board: number[];
     current_player: string;
     done: boolean;
-    winner?: string;
+    winner?: string | null;
   }
 
 export interface ErrorResponse {

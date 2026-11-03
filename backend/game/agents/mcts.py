@@ -1,10 +1,7 @@
-import random
-from backend.game.agents.player import AIPlayer
+from backend.game.agents.random import RandomPlayer
 
-class MCTSPlayer(AIPlayer):
+
+class MCTSPlayer(RandomPlayer):
+    """Placeholder until MCTS is implemented: plays random valid moves."""
     def __init__(self):
-        super().__init__(name="random", display_name="Random")
-        self.NUM_ACTIONS = 7
-        
-    async def make_move(self, obs):
-        return random.randint(0,self.NUM_ACTIONS-1)
+        super().__init__(name="mcts", display_name="MCTS")

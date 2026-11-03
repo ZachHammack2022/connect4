@@ -1,5 +1,6 @@
 import unittest
-from backend.game import Connect4Env
+from backend.game.game import Connect4Env
+from backend.game.agents.minimax import MinimaxPlayer
 
 class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
     
@@ -78,6 +79,43 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         env = Connect4Env()
         env.board[0][0] = 'X'  # Column 0 is now full
         self.assertFalse(env._is_valid_action(0))
+
+    async def test_minimax_takes_immediate_win_as_second_player(self):
+        env = Connect4Env()
+        for move in [0, 3, 0, 3, 1, 3, 6]:  # O has three stacked in column 3
+            env.step(move)
+        self.assertEqual(await MinimaxPlayer().make_move(env._get_obs()), 3)
+
+    async def test_minimax_blocks_opponent_win(self):
+        env = Connect4Env()
+        for move in [0, 6, 1, 6, 2]:  # X threatens column 3 on the bottom row
+            env.step(move)
+        self.assertEqual(await MinimaxPlayer().make_move(env._get_obs()), 3)
+
+    async def test_ai_never_crashes_on_full_columns(self):
+        env = Connect4Env('random', 'random')
+        for _ in range(50):
+            env.reset()
+            obs, _, done, _ = await env.run_ai_turns()
+            self.assertTrue(done)
+
+    async def test_run_ai_turns_when_game_over(self):
+        env = Connect4Env('human', 'minimax')
+        for move in [0, 1, 0, 1, 0, 1, 0]:
+            env.step(move)
+        self.assertTrue(env.terminated)
+        await env.set_mode(2, 'random')  # used to raise UnboundLocalError
+
+    async def test_reset_lets_ai_open(self):
+        env = Connect4Env('minimax', 'human')
+        await env.reset_and_start()
+        self.assertEqual(env.current_player, 'O')
+        self.assertEqual(sum(1 for cell in env._get_obs() if cell != 0), 1)
+
+    def test_out_of_range_action_is_invalid(self):
+        env = Connect4Env()
+        self.assertFalse(env._is_valid_action(-1))
+        self.assertFalse(env._is_valid_action(7))
 
 
 if __name__ == '__main__':

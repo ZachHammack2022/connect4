@@ -1,13 +1,13 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import UsernameInput from './components/UsernameInput';
 import Leaderboard from './components/Leaderboard';
 import GameBoard from './components/GameBoard'; // Your existing GameBoard component
-import BottomNavBar from './components/BottomNavBar';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import "./App.css"
 import {LeaderboardEntry, MoveSuccessResponse } from './interfaces/interfaces';
+import { getErrorMessage } from './hooks/useApi';
 import { useFetchLeaderboard,useChangeMode,useFetchGameState,useHandleColumnClick,useResetGame,useSubmitGameResult } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
 import { ThemeProvider } from '@mui/material/styles';
@@ -35,6 +35,9 @@ function App() {
     const { handleColumnClick } = useHandleColumnClick();
     const { resetGame } = useResetGame();
     const [mode, setMode] = useState<'light' | 'dark'>('dark');
+    // Tracks whether the current game has already finished, so a result is
+    // only submitted once (e.g. not again when switching modes after the game).
+    const gameOverRef = useRef(false);
 
     const colorMode = {
       toggleColorMode: () => {
@@ -57,27 +60,23 @@ function App() {
     };
 
     const handleModeChange = async (newMode:string,player:number) => {
-        console.log("new mode: ",newMode)
-        console.log("player: ",player)
-        console.log(player===1)
-        console.log(player===2)
         try {
             const response = await handleChangeMode(newMode,player);
-            console.log(response)
-            if (player === 1){
-              setMode1(newMode);
-            }
-            else if (player === 2){
-              setMode2(newMode);
-            }
-            updateGame(response)
+            const newMode1 = player === 1 ? newMode : mode1;
+            const newMode2 = player === 2 ? newMode : mode2;
+            setMode1(newMode1);
+            setMode2(newMode2);
+            updateGame(response, newMode1, newMode2)
         } catch (error) {
-            console.log(`Error while changing mode for player ${player}: ${error}`);
+            setError(`Error while changing mode for player ${player}: ${getErrorMessage(error)}`);
         }
     };
 
     const onColumnClick = async (column:number) => {
-            if (isColumnFull(column) ) {
+          if (board.length === 0) {
+            return;
+          }
+          if (isColumnFull(column) ) {
             setError("This column is full. Try a different one.");
             return;
           }
@@ -89,31 +88,37 @@ function App() {
             const moveResponse = await handleColumnClick(column);
             updateGame(moveResponse)
         } catch (error) {
-            setError(`Error while making a move: ${error}`);
+            setError(`Error while making a move: ${getErrorMessage(error)}`);
         }
     };
 
-    const updateGame = (moveResponse:MoveSuccessResponse) => {
+    const updateGame = (moveResponse:MoveSuccessResponse, currentMode1 = mode1, currentMode2 = mode2) => {
       updateGameBoard(moveResponse.board);
       setCurrentPlayer(moveResponse.current_player);
-      if (moveResponse.done) {
-          setGameOver(true);
-          setWinner(moveResponse.winner || null);
-          if (moveResponse.winner) {
-              handleSubmitGameResult(moveResponse.winner === 'X');
-          }
+      setGameOver(moveResponse.done);
+      setWinner(moveResponse.winner || null);
+
+      const justFinished = moveResponse.done && !gameOverRef.current;
+      gameOverRef.current = moveResponse.done;
+      if (!justFinished || !moveResponse.winner) {
+          return;
+      }
+      // Only human-vs-AI games count towards the leaderboard, scored from the human's side.
+      const human1 = currentMode1 === 'human';
+      const human2 = currentMode2 === 'human';
+      if (human1 !== human2) {
+          const humanSymbol = human1 ? 'X' : 'O';
+          handleSubmitGameResult(moveResponse.winner === humanSymbol);
       }
     }
 
     const onResetGame = async () => {
         try {
+            gameOverRef.current = false;
             const resetResponse = await resetGame();
-            updateGameBoard(resetResponse.board);
-            setCurrentPlayer(resetResponse.current_player);
-            setGameOver(false);
-            setWinner(null);
+            updateGame(resetResponse);
         } catch (error) {
-            setError(`Error while resetting game: ${error}`);
+            setError(`Error while resetting game: ${getErrorMessage(error)}`);
         }
     };
 
@@ -131,7 +136,6 @@ function App() {
       board2D.push(flatBoard.slice(row * 7, (row + 1) * 7));
     }
     setBoard(board2D);
-    console.log(board)
   };
 
 
@@ -150,6 +154,9 @@ function App() {
             const data = await fetchGameState();
             updateGameBoard(data.board);
             setCurrentPlayer(data.current_player);
+            setGameOver(data.done);
+            setWinner(data.winner || null);
+            gameOverRef.current = data.done;
         } catch (error) {
             setError("Error while fetching initial game state.");
         }
@@ -157,7 +164,8 @@ function App() {
 
     initLeaderboard();
     initGameState();
-}, []); // Empty dependency array to run only on component mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // Run only on component mount
 
 
 const buttons1 = [

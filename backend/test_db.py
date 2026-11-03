@@ -10,6 +10,7 @@ db_params = {
 }
 
 # Attempting to connect to the database
+conn = None
 try:
     conn = psycopg2.connect(**db_params)
     print("Connection successful")

@@ -37,6 +37,13 @@ If you want to run each service individually instead, you can run the following 
 docker compose up <service>
 ```
 
+### Running the backend tests
+From the repository root:
+
+```bash
+python -m unittest backend.game.env_testing
+```
+
 ## Upcoming
 - **Implementation of AI Agents**: Agents to be added include a Deep Q-Learning (DQN) agent, a Monte-Carlo Tree Search (MCTS) agent, and a Minimax with Alpha-Beta Pruning agent. 
 

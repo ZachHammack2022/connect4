@@ -38,7 +38,7 @@ async def submit_game(result: GameResult):
 @router.get("/leaderboard/")
 async def get_leaderboard():
     try:
-        query = "SELECT username, wins, losses FROM games ORDER BY wins DESC"
+        query = "SELECT username, wins, losses FROM games ORDER BY wins DESC, losses ASC"
         return await database.fetch_all(query)
     except Exception as e:
         logging.error(f"Error fetching leaderboard: {e}")

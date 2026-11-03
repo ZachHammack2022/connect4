@@ -1,0 +1,6 @@
+**/node_modules
+**/__pycache__
+frontend/build
+.git
+rl_agent
+assets

@@ -1,5 +1,16 @@
 import axios from 'axios';
-import { LeaderboardEntry,MoveSuccessResponse,ErrorResponse } from '../interfaces/interfaces';
+import { LeaderboardEntry,MoveSuccessResponse } from '../interfaces/interfaces';
+
+// Extracts a readable message from an API error (FastAPI returns `{ detail }`).
+export const getErrorMessage = (error: unknown): string => {
+    if (axios.isAxiosError(error)) {
+        const detail = error.response?.data?.detail;
+        if (typeof detail === 'string') return detail;
+        if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
+        return error.message;
+    }
+    return error instanceof Error ? error.message : String(error);
+};
 
 
 export const useFetchLeaderboard = () => {
@@ -54,17 +65,8 @@ export const useChangeMode = () => {
 // useHandleColumnClick hook
 export const useHandleColumnClick = () => {
     const handleColumnClick = async (column: number) => {
-        try {
-            const response = await axios.post<MoveSuccessResponse>('/move', { column });
-            return response.data;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                // If it's an Axios error, extract and throw the ErrorResponse
-                throw error.response?.data as ErrorResponse;
-            }
-            // If it's not an Axios error, throw a generic error object
-            throw new Error("An unknown error occurred while handling column click.");
-        }
+        const response = await axios.post<MoveSuccessResponse>('/move', { column });
+        return response.data;
     };
     return { handleColumnClick };
 };
