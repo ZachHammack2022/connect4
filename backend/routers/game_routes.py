@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from contextlib import asynccontextmanager
+
+from fastapi import APIRouter, HTTPException
 from backend.types.game_types import Move
 from backend.types.api_types import ModeChangeInput
-from backend.dependencies import get_game_store, get_game_session
-from backend.game_store import GameSession
+from backend.dependencies import get_game_store
+from backend.game_store import GameNotFound
 from backend.game.game import Connect4Env
 
 router = APIRouter(prefix="/games")
@@ -23,21 +25,31 @@ def game_state(game_id: str, game: Connect4Env):
     }
 
 
+@asynccontextmanager
+async def open_game(game_id: str):
+    """Exclusive access to a game for the rest of the request; 404 if unknown."""
+    try:
+        async with get_game_store().open(game_id) as game:
+            yield game
+    except GameNotFound:
+        raise HTTPException(status_code=404, detail="Game not found. It may have expired; start a new game.")
+
+
 @router.post("")
 async def create_game():
-    game_id, session = get_game_store().create()
-    return game_state(game_id, session.game)
+    game_id, game = await get_game_store().create()
+    return game_state(game_id, game)
 
 
 @router.get("/{game_id}")
-async def get_state(game_id: str, session: GameSession = Depends(get_game_session)):
-    return game_state(game_id, session.game)
+async def get_state(game_id: str):
+    async with open_game(game_id) as game:
+        return game_state(game_id, game)
 
 
 @router.post("/{game_id}/move")
-async def make_move(game_id: str, move: Move, session: GameSession = Depends(get_game_session)):
-    async with session.lock:
-        game = session.game
+async def make_move(game_id: str, move: Move):
+    async with open_game(game_id) as game:
         if game.terminated:
             raise HTTPException(status_code=400, detail="The game is over. Reset the game to play again.")
         if game.check_if_ai_move():
@@ -49,17 +61,17 @@ async def make_move(game_id: str, move: Move, session: GameSession = Depends(get
 
 
 @router.post("/{game_id}/reset")
-async def reset_game(game_id: str, session: GameSession = Depends(get_game_session)):
-    async with session.lock:
-        await session.game.reset_and_start()
-        return game_state(game_id, session.game)
+async def reset_game(game_id: str):
+    async with open_game(game_id) as game:
+        await game.reset_and_start()
+        return game_state(game_id, game)
 
 
 @router.post("/{game_id}/mode")
-async def set_mode(game_id: str, mode_change_input: ModeChangeInput, session: GameSession = Depends(get_game_session)):
-    async with session.lock:
+async def set_mode(game_id: str, mode_change_input: ModeChangeInput):
+    async with open_game(game_id) as game:
         try:
-            await session.game.set_mode(mode_change_input.player, mode_change_input.mode, mode_change_input.difficulty)
+            await game.set_mode(mode_change_input.player, mode_change_input.mode, mode_change_input.difficulty)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-        return game_state(game_id, session.game)
+        return game_state(game_id, game)

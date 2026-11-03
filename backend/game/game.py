@@ -126,6 +126,33 @@ class Connect4Env(gym.Env):
         self.winning_cells = []
         return self._get_obs()
 
+    def to_dict(self):
+        """Serialisable snapshot of the game, used to store it in the database."""
+        return {
+            "board": self.board,
+            "current_player": self.current_player,
+            "terminated": self.terminated,
+            "winner": self.winner,
+            "winning_cells": self.winning_cells,
+            "players": [
+                {"mode": player.name, "difficulty": player.difficulty}
+                for player in (self.player1, self.player2)
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        players = data["players"]
+        game = cls()
+        game.player1 = game.player_modes[players[0]["mode"]](difficulty=players[0]["difficulty"])
+        game.player2 = game.player_modes[players[1]["mode"]](difficulty=players[1]["difficulty"])
+        game.board = [list(row) for row in data["board"]]
+        game.current_player = data["current_player"]
+        game.terminated = data["terminated"]
+        game.winner = data["winner"]
+        game.winning_cells = data["winning_cells"]
+        return game
+
     def switch_player(self):
         self.current_player = 'O' if self.current_player == 'X' else 'X'
 # Only functions above this line should change

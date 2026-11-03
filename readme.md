@@ -3,13 +3,13 @@
 ## Overview
 This Connect4 game is a full-stack web application that aims to replicate the classic Connect4 experience with additional features including various AI opponents and a leaderboard system.
 
-![Connect4 Game Screenshot](assets/pictures/connect4_v3.png)
+![Connect4 Game Screenshot](assets/pictures/connect4_v4.png)
 
 ## Features
 - **Full-stack Connect4 Game**: A functional Connect4 game that can be played in a web browser.
 - **Opponent Choice**: Switch your opponent at any time before, after, or during matches. 
 - **Leaderboard**: A leaderboard that will track and display player rankings. Human-vs-AI games count, scored from the human's side.
-- **Per-user games**: Every browser tab plays its own game. Refreshing the page resumes it; games idle for an hour are cleaned up.
+- **Per-user games**: Every browser tab plays its own game. Refreshing the page resumes it. Games are stored in Postgres, so they survive backend restarts; games untouched for a day are cleaned up.
 
 ## Technology Stack
 - **Frontend**: React, TypeScript, Material UI
@@ -43,10 +43,10 @@ From the repository root:
 
 ```bash
 pip install -e ".[dev]"
-python -m unittest backend.game.env_testing backend.test_api backend.test_leaderboard
+python -m unittest backend.game.env_testing backend.test_api backend.test_leaderboard backend.test_postgres_games
 ```
 
-The leaderboard tests need Postgres and are skipped unless `TEST_DATABASE_URL` is set (they clear the `games` table, so don't point them at real data). CI runs everything, including the frontend build, on every pull request.
+The leaderboard and Postgres game tests need a database and are skipped unless `TEST_DATABASE_URL` is set (they clear the `games` and `game_sessions` tables, so don't point them at real data). CI runs everything, including the frontend build, on every pull request.
 
 To train the RL agents in `rl_agent/`, install the extra training dependencies with `pip install -e ".[rl]"`.
 
@@ -61,7 +61,7 @@ To train the RL agents in `rl_agent/`, install the extra training dependencies w
 | GET | `/leaderboard/` | Leaderboard |
 | POST | `/submit_game/` | `{"username": ..., "won": true or false}` |
 
-Games are kept in the backend's memory, so restarting it ends them; the frontend then starts a new game automatically.
+Games are stored in Postgres by default. Set `GAME_STORE=memory` to keep them in the backend's memory instead (no database needed for games, but they end when the backend restarts and only work with a single backend process). If a game is gone, the frontend starts a new one automatically.
 
 ## Upcoming
 - **Implementation of AI Agents**: Agents to be added include a Deep Q-Learning (DQN) agent, a Monte-Carlo Tree Search (MCTS) agent, and a Minimax with Alpha-Beta Pruning agent. 
