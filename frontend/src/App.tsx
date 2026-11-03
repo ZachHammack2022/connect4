@@ -54,7 +54,7 @@ function App() {
     });
 
     return (
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="shell">
                 <Header username={username} theme={theme} onToggleTheme={toggleTheme} muted={muted} onToggleMuted={toggleMuted} />
                 <main>
