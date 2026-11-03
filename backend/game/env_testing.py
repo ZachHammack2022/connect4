@@ -379,3 +379,37 @@ class TestUndoAndHistory(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(copy.history, env.history)
         self.assertTrue(copy.undo())
         self.assertEqual(copy.counts(), {"X": 4, "O": 1})
+
+
+class TestHints(unittest.IsolatedAsyncioTestCase):
+    async def test_tictactoe_hint_takes_the_win(self):
+        env = TicTacToeEnv()
+        for move in [0, 3, 1, 4]:   # X has 0 and 1; O threatens 5
+            env.step(move)
+        self.assertEqual(await env.hint(), 2)
+        self.assertTrue(env.assisted)
+
+    async def test_tictactoe_hint_blocks(self):
+        env = TicTacToeEnv()
+        for move in [0, 4, 8, 2]:   # O threatens 2-4-6
+            env.step(move)
+        self.assertEqual(await env.hint(), 6)
+
+    async def test_hints_are_legal_in_every_game(self):
+        from backend.game.reversi import ReversiEnv
+        for env in (Connect4Env(), TicTacToeEnv(), ReversiEnv()):
+            move = await env.hint()
+            self.assertIn(move, env.valid_actions())
+            self.assertEqual(sum(1 for c in env._get_obs() if c), 4 if env.game_type == 'reversi' else 0)
+
+    async def test_connect4_hint_blocks_four(self):
+        env = Connect4Env()
+        for move in [0, 3, 0, 4, 6, 5]:  # O has 3-4-5 on the bottom row; X holds 6, so 2 blocks
+            env.step(move)
+        self.assertEqual(await env.hint(), 2)
+
+    async def test_no_hint_when_game_over(self):
+        env = TicTacToeEnv()
+        for move in [0, 3, 1, 4, 2]:
+            env.step(move)
+        self.assertIsNone(await env.hint())

@@ -141,6 +141,35 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         await withGame('undoing a move', api.undoMove);
     };
 
+    // The cell a hint suggested, shown briefly on the board.
+    const [hintCell, setHintCell] = useState<[number, number] | null>(null);
+    const hintTimer = useRef<number | undefined>(undefined);
+    const showHint = (cell: [number, number] | null) => {
+        window.clearTimeout(hintTimer.current);
+        setHintCell(cell);
+        if (cell) hintTimer.current = window.setTimeout(() => setHintCell(null), 3000);
+    };
+    useEffect(() => () => window.clearTimeout(hintTimer.current), []);
+    // Any change to the board (a move, undo, reset) clears the hint.
+    const boardKey = state?.board.join(',');
+    useEffect(() => { showHint(null); }, [boardKey]);
+
+    const [hinting, setHinting] = useState(false);
+    const requestHint = async () => {
+        if (!humanToMove) return;
+        setHinting(true);
+        await withGame('getting a hint', async (gameId) => {
+            const next = await api.getHint(gameId);
+            const piece = next.current_player === 'X' ? -1 : 1;
+            const after = game.applyMove(next.board, next.hint, next.cols, piece);
+            // For Connect 4 the move is a column; find where the disc would land.
+            const index = after ? after.findIndex((cell, i) => cell !== 0 && next.board[i] === 0) : -1;
+            showHint(index >= 0 ? [Math.floor(index / next.cols), index % next.cols] : null);
+            return next;
+        });
+        setHinting(false);
+    };
+
     const reset = async () => {
         gameOverRef.current = false;
         await withGame('resetting the game', api.resetGame);
@@ -193,6 +222,6 @@ export const useGameSession = (game: AvailableGame, username: string) => {
 
     return {
         state, busy, error, clearError, leaderboard, leaderboardLoading,
-        currentMode, humanToMove, move, changeMode, changeDifficulty, reset, undo, canUndo,
+        currentMode, humanToMove, move, changeMode, changeDifficulty, reset, undo, canUndo, requestHint, hintCell, hinting,
     };
 };

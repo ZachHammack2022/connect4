@@ -18,7 +18,7 @@ A full-stack web app for classic two-player board games. Play against a friend o
 ## Features
 - **Home menu**: Pick a game; set a name once (remembered in the browser, no account needed).
 - **Light and dark themes**: Follows the system setting until you pick one in the header.
-- **Undo and move history**: Take back moves (Ctrl/Cmd+Z) and follow the game in a move list. Games with undos are practice and don't count.
+- **Undo, hints and move history**: Take back moves (Ctrl/Cmd+Z), ask for a hint (H) and follow the game in a move list. Games with undos or hints are practice and don't count.
 - **Opponent choice**: Switch either side between a human and an AI at any time, with a difficulty setting for the stronger AIs.
 - **Leaderboards**: One per game. Human-vs-AI games count wins, losses and draws, from the human's side.
 - **Per-user games**: Every browser tab plays its own game of each type. Refreshing the page resumes it. Games are stored in Postgres, so they survive backend restarts; games untouched for a day are cleaned up.
@@ -74,6 +74,7 @@ To train the RL agents in `rl_agent/`, install the extra training dependencies w
 | POST | `/games/{game_id}/move` | `{"move": n}` – a column (0-6) in Connect 4, a cell (0-8) in tic-tac-toe, a cell (0-63) in Reversi. The state lists `legal_moves`, and `passed` names a side that had no move. The AI replies automatically |
 | POST | `/games/{game_id}/mode` | `{"player": 1 or 2, "mode": ..., "difficulty": "easy", "medium" or "hard"}`; the modes a game offers are listed in its state |
 | POST | `/games/{game_id}/undo` | Take back your last move (and the AI's reply). The state's `history` lists moves played; `assisted` games don't count on the leaderboard |
+| POST | `/games/{game_id}/hint` | The move the strongest AI would play for you (`hint` in the response); marks the game as assisted |
 | POST | `/games/{game_id}/reset` | Restart the game, keeping the chosen players |
 | GET | `/leaderboard/?game_type=...` | A game's leaderboard |
 | POST | `/submit_game/` | `{"username": ..., "game_type": ..., "outcome": "win", "loss" or "draw"}` |

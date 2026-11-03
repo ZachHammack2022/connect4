@@ -293,6 +293,11 @@ main { flex: 1; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+/* A suggested move: a pulsing gold ring. */
+@keyframes hint-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px var(--gold), 0 0 0 0 color-mix(in srgb, var(--gold) 60%, transparent); }
+    50% { box-shadow: 0 0 0 3px var(--gold), 0 0 0 10px transparent; }
+}
 @keyframes fade-up {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }

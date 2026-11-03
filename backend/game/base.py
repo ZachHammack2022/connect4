@@ -17,6 +17,7 @@ class TurnBasedGame:
     ROWS = 0
     COLS = 0
     player_modes = {}   # mode name -> player class
+    hint_mode = 'minimax'  # the AI asked for hints, at hard difficulty
 
     def __init__(self, player1='human', player2='human'):
         self.player1 = self.player_modes[player1]()
@@ -72,6 +73,19 @@ class TurnBasedGame:
             self.history[-1]["by"] = entry["by"]
         self.assisted = True
         return True
+
+    async def hint(self):
+        """The move the strongest AI would play for the side to move. Using a
+        hint marks the game as assisted. Returns None if the game is over."""
+        if self.terminated:
+            return None
+        advisor = self.player_modes[self.hint_mode](difficulty='hard')
+        legal = self.valid_actions()
+        move = await advisor.make_move(self._get_obs(), legal_moves=legal, **self.ai_context())
+        if move is None or move not in legal:
+            move = legal[0]
+        self.assisted = True
+        return move
 
     def ai_context(self):
         """Extra keyword arguments for AI players' make_move (e.g. whose turn it is)."""

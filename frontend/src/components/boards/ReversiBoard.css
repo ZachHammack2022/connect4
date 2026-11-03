@@ -90,3 +90,5 @@
     background: #ff4d5e;
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
 }
+
+.rv-cell.hinted { animation: hint-pulse 1s ease-in-out infinite; z-index: 1; }

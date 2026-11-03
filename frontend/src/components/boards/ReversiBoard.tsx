@@ -5,7 +5,7 @@ import './ReversiBoard.css';
 
 const FILES = 'abcdefgh';
 
-const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, legalMoves, lastCell, interactive, onMove }) => {
+const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, legalMoves, lastCell, hintCell, interactive, onMove }) => {
     const [hovered, setHovered] = useState<number | null>(null);
     const grid = toRows(board, rows, cols);
     const piece = currentPlayer === 'X' ? -1 : 1;
@@ -59,7 +59,7 @@ const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, 
                                 <div
                                     key={index}
                                     className={['rv-cell', isLegal ? 'legal' : '', winning ? 'winning' : '', faded ? 'faded' : '',
-                                        cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : ''].filter(Boolean).join(' ')}
+                                        cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : '', isLastCell(hintCell ?? null, r, c) ? 'hinted' : ''].filter(Boolean).join(' ')}
                                     role="gridcell"
                                     tabIndex={isLegal ? 0 : -1}
                                     data-cell={index}

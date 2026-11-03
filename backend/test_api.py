@@ -88,6 +88,18 @@ class TestGameApi(unittest.TestCase):
         self.assertTrue(state['assisted'])
         self.assertEqual(state['current_player'], 'X')
 
+    def test_hint(self):
+        state = self.client.post('/games', json={'game_type': 'tictactoe'}).json()
+        game_id = state['game_id']
+        state = self.client.post(f'/games/{game_id}/hint').json()
+        self.assertIn(state['hint'], range(9))
+        self.assertTrue(state['assisted'])
+        self.assertEqual(sum(cell != 0 for cell in state['board']), 0)
+        # Two AIs play the game out; no hints once it is over.
+        self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'random'})
+        self.client.post(f'/games/{game_id}/mode', json={'player': 1, 'mode': 'random'})
+        self.assertEqual(self.client.post(f'/games/{game_id}/hint').status_code, 400)
+
     def test_default_game_is_connect4(self):
         state = self.client.post('/games').json()
         self.assertEqual((state['game_type'], state['rows'], state['cols']), ('connect4', 6, 7))

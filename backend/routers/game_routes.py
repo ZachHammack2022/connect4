@@ -91,6 +91,17 @@ async def undo_move(game_id: str):
         return game_state(game_id, game)
 
 
+@router.post("/{game_id}/hint")
+async def hint(game_id: str):
+    async with open_game(game_id) as game:
+        if game.terminated:
+            raise HTTPException(status_code=400, detail="The game is over.")
+        if game.check_if_ai_move():
+            raise HTTPException(status_code=400, detail="It is not a human player's turn.")
+        move = await game.hint()
+        return {**game_state(game_id, game), "hint": move}
+
+
 @router.post("/{game_id}/mode")
 async def set_mode(game_id: str, mode_change_input: ModeChangeInput):
     async with open_game(game_id) as game:
