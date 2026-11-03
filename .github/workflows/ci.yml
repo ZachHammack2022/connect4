@@ -33,7 +33,7 @@ jobs:
       - name: Run tests
         env:
           TEST_DATABASE_URL: postgresql://user:password@localhost:5432/mydatabase
-        run: python -m unittest -v backend.game.env_testing backend.test_api backend.test_leaderboard backend.test_postgres_games
+        run: python -m unittest -v backend.game.env_testing backend.test_api backend.test_online backend.test_leaderboard backend.test_postgres_games
 
   frontend:
     runs-on: ubuntu-latest

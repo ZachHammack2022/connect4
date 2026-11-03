@@ -22,6 +22,8 @@ class TurnBasedGame:
     def __init__(self, player1='human', player2='human'):
         self.player1 = self.player_modes[player1]()
         self.player2 = self.player_modes[player2]()
+        # Seats for online play (see backend/online.py); None for local games.
+        self.online = None
         self.reset()
 
     # ---- rules each game implements ------------------------------------
@@ -215,6 +217,7 @@ class TurnBasedGame:
             "passed": self.passed,
             "history": self.history,
             "assisted": self.assisted,
+            "online": self.online,
             "players": [
                 {"mode": player.name, "difficulty": player.difficulty}
                 for player in (self.player1, self.player2)
@@ -235,4 +238,5 @@ class TurnBasedGame:
         game.passed = data.get("passed")
         game.history = data.get("history", [])
         game.assisted = data.get("assisted", False)
+        game.online = data.get("online")
         return game

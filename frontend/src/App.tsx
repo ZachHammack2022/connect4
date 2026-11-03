@@ -4,6 +4,7 @@ import axios from 'axios';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import GamePage from './pages/GamePage';
+import OnlineGamePage from './pages/OnlineGamePage';
 import { AVAILABLE_GAMES } from './games';
 
 // Use environment variable for the Axios base URL
@@ -66,6 +67,7 @@ function App() {
                                 element={<GamePage key={game.id} game={game} username={username} setUsername={setUsername}
                                     muted={muted} onToggleMuted={toggleMuted} />} />
                         ))}
+                        <Route path="/play/:gameId" element={<OnlineGamePage username={username} muted={muted} />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </main>

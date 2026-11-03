@@ -56,3 +56,12 @@ export const VolumeOff = (p: IconProps) => (
 export const Keyboard = (p: IconProps) => (
     <Icon {...p}><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M10 13h4M7 16h10" /></Icon>
 );
+export const Copy = (p: IconProps) => (
+    <Icon {...p}><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" /></Icon>
+);
+export const Share = (p: IconProps) => (
+    <Icon {...p}><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="m16 6-4-4-4 4M12 2v13" /></Icon>
+);
+export const Users = (p: IconProps) => (
+    <Icon {...p}><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0" /><path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4.5-6.5" /></Icon>
+);
