@@ -78,8 +78,12 @@ class TestPostgresGames(unittest.TestCase):
         with ThreadPoolExecutor(8) as pool:
             statuses = list(pool.map(move, range(12)))
         board = self.client.get(f'/games/{game_id}').json()['board']
+        # Without the row lock, overlapping requests overwrite each other and
+        # the board ends up with fewer discs than successful moves. (Not every
+        # move need succeed: the random order can complete four in a row,
+        # after which further moves are rejected.)
         self.assertEqual(sum(cell != 0 for cell in board), statuses.count(200))
-        self.assertEqual(statuses.count(200), 12)
+        self.assertGreater(statuses.count(200), 4)
 
     def test_failed_request_does_not_save(self):
         game_id = self.new_game()

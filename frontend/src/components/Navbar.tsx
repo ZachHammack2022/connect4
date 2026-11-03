@@ -7,6 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useColorMode } from './ThemeContext';
+import { Link as RouterLink } from 'react-router-dom';
 import "./NavBar.css"
 
 
@@ -18,8 +19,10 @@ const Navbar: React.FC = () => {
     return (
         <AppBar position="static">
             <Toolbar>
-            <Typography variant="h5" sx={{ flexGrow: 1, textAlign: 'center' }}>Connect4</Typography>
-            <IconButton onClick={toggleColorMode} color="inherit" sx={{ position: 'absolute', right: 20 }}>
+            <Typography variant="h5" sx={{ flexGrow: 1, textAlign: 'center' }}>
+                <RouterLink to="/" style={{ color: 'inherit', textDecoration: 'none' }}>Game Room</RouterLink>
+            </Typography>
+            <IconButton onClick={toggleColorMode} color="inherit" aria-label="Toggle light/dark mode" sx={{ position: 'absolute', right: 20 }}>
                 {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
             </Toolbar>

@@ -191,9 +191,11 @@ class TestTicTacToe(unittest.IsolatedAsyncioTestCase):
             await env.set_mode(2, 'minimax', 'hard')
             await env.run_ai_turns()
             self.assertNotEqual(env.winner, 'X')
-        env = TicTacToeEnv('minimax', 'minimax')
-        await env.set_mode(1, 'minimax', 'hard')
+        # Two perfect players always draw. Set O first: setting X (to move)
+        # to an AI starts play, and both sides must be on hard by then.
+        env = TicTacToeEnv()
         await env.set_mode(2, 'minimax', 'hard')
+        await env.set_mode(1, 'minimax', 'hard')
         self.assertTrue(env.terminated)
         self.assertIsNone(env.winner)
 
