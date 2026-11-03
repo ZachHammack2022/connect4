@@ -4,14 +4,14 @@
     height: 22px;
     flex-shrink: 0;
     border-radius: 50%;
-    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2), 0 0 0 3px color-mix(in srgb, var(--token) 22%, transparent);
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-strong), 0 0 0 4px color-mix(in srgb, var(--token-accent) 22%, transparent);
     background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--token) 55%, #fff), var(--token) 60%);
 }
-.token-X { --token: var(--x-color); }
-.token-O { --token: var(--o-color); }
+.token-X { --token: var(--x-color); --token-accent: var(--x-accent, var(--x-color)); }
+.token-O { --token: var(--o-color); --token-accent: var(--o-accent, var(--o-color)); }
 
 .seat {
-    --seat-color: var(--x-color);
+    --seat-color: var(--x-accent, var(--x-color));
     position: relative;
     display: flex;
     flex-direction: column;
@@ -23,7 +23,7 @@
     border: 1px solid var(--border);
     transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s;
 }
-.seat-O { --seat-color: var(--o-color); }
+.seat-O { --seat-color: var(--o-accent, var(--o-color)); }
 
 .seat.is-active {
     border-color: color-mix(in srgb, var(--seat-color) 70%, transparent);
@@ -42,6 +42,18 @@
     font-family: var(--font-display);
     font-weight: 700;
     font-size: 17px;
+}
+.seat-score {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    vertical-align: 2px;
 }
 .seat-who {
     font-size: 13px;

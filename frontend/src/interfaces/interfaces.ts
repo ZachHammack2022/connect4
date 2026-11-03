@@ -21,6 +21,10 @@ export interface GameState {
     difficulty1: Difficulty | null;
     difficulty2: Difficulty | null;
     winning_cells: [number, number][];
+    // Moves the side to move may play (empty once the game is over).
+    legal_moves: number[];
+    // The side that had to pass on the last turn, in games with passing.
+    passed: 'X' | 'O' | null;
 }
 
 export type Difficulty = 'easy' | 'medium' | 'hard';

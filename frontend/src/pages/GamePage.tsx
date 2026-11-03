@@ -7,6 +7,7 @@ import Toast from '../components/Toast';
 import { ArrowLeft, Refresh } from '../components/Icons';
 import Connect4Board from '../components/boards/Connect4Board';
 import TicTacToeBoard from '../components/boards/TicTacToeBoard';
+import ReversiBoard from '../components/boards/ReversiBoard';
 import { BoardProps } from '../components/boards/types';
 import { useGameSession } from '../hooks/useGameSession';
 import { AvailableGame, Side } from '../games';
@@ -16,6 +17,7 @@ import './GamePage.css';
 const BOARDS: Record<string, React.FC<BoardProps>> = {
     connect4: Connect4Board,
     tictactoe: TicTacToeBoard,
+    reversi: ReversiBoard,
 };
 
 interface GamePageProps {
@@ -39,21 +41,27 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
 
     const result = () => {
         if (!state?.done) return null;
-        if (!state.winner) return { title: 'It’s a draw', sub: 'Nobody blinked. Go again?', tone: 'draw' };
+        if (!state.winner) return { title: 'It’s a draw', sub: `Nobody blinked.${scoreLine}`, tone: 'draw' };
         const winner = state.winner;
         if (humanSide) {
             return winner === humanSide
-                ? { title: 'You win!', sub: `You beat ${modeLabel(modeOf(state, winner === 'X' ? 'O' : 'X'))}.`, tone: 'win' }
-                : { title: `${modeLabel(modeOf(state, winner))} wins`, sub: 'Shake it off and try again.', tone: 'loss' };
+                ? { title: 'You win!', sub: `You beat ${modeLabel(modeOf(state, winner === 'X' ? 'O' : 'X'))}.${scoreLine}`, tone: 'win' }
+                : { title: `${modeLabel(modeOf(state, winner))} wins`, sub: `Shake it off and try again.${scoreLine}`, tone: 'loss' };
         }
-        return { title: `${game.sideLabels[winner]} wins!`, sub: 'Well played, both of you.', tone: 'win' };
+        return { title: `${game.sideLabels[winner]} wins!`, sub: `Well played, both of you.${scoreLine}`, tone: 'win' };
     };
+    const scores = state && game.score ? game.score(state.board) : null;
+    const scoreLine = scores ? ` Final score ${scores.X}–${scores.O}.` : '';
     const outcome = result();
 
     const statusText = () => {
         if (!state) return 'Setting up the board…';
         const side = game.sideLabels[state.current_player];
         if (thinking) return `${modeLabel(currentMode)} is thinking…`;
+        if (state.passed) {
+            const mover = humanSide === state.current_player ? 'you go again' : `${side} goes again`;
+            return `${game.sideLabels[state.passed]} has no moves, ${mover}`;
+        }
         if (currentMode === 'human') {
             return humanSide === state.current_player ? 'Your move' : `${side} to move`;
         }
@@ -74,6 +82,7 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                 active={!!state && !state.done && state.current_player === side}
                 thinking={thinking && state?.current_player === side}
                 won={!!state?.done && state.winner === side}
+                score={scores ? scores[side] : undefined}
                 playerName={humanSide === side ? username || 'You' : undefined}
                 disabled={!state || busy}
                 onModeChange={(m) => session.changeMode(player, m)}
@@ -85,6 +94,8 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
     const pageStyle = {
         '--x-color': game.sideColors.X,
         '--o-color': game.sideColors.O,
+        '--x-accent': game.accentColors?.X ?? game.sideColors.X,
+        '--o-accent': game.accentColors?.O ?? game.sideColors.O,
         '--tint': game.tint,
     } as React.CSSProperties;
 
@@ -134,6 +145,7 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                                     cols={state.cols}
                                     currentPlayer={state.current_player}
                                     winningCells={state.winning_cells}
+                                    legalMoves={state.legal_moves ?? []}
                                     interactive={session.humanToMove}
                                     onMove={session.move}
                                 />

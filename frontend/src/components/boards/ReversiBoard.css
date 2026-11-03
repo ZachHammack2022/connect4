@@ -1,0 +1,82 @@
+.rv {
+    --cell: min(56px, calc((100cqi - 24px) / 8.4));
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+@supports not (width: 1cqi) {
+    .rv { --cell: min(56px, calc((100vw - 80px) / 8.4)); }
+}
+
+.rv-board {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: calc(var(--cell) * 0.18);
+    border-radius: calc(var(--cell) * 0.3);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 40%),
+        #0c6a3a;
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.18),
+        inset 0 -4px 0 rgba(0, 0, 0, 0.3),
+        0 30px 60px -20px rgba(16, 120, 64, 0.55),
+        0 12px 24px -12px rgba(0, 0, 0, 0.5);
+}
+
+.rv-row { display: flex; gap: 2px; }
+
+.rv-cell {
+    position: relative;
+    width: var(--cell);
+    height: var(--cell);
+    display: grid;
+    place-items: center;
+    border-radius: 4px;
+    background: radial-gradient(circle at 50% 40%, #1a9a58, #148549);
+    perspective: 300px;
+    transition: background-color 0.2s, opacity 0.3s;
+}
+.board-active .rv-cell.legal { cursor: pointer; }
+.rv-cell:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+
+.rv-disc {
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    transition: filter 0.3s, opacity 0.2s, transform 0.2s;
+}
+.rv-X {
+    background: radial-gradient(circle at 35% 30%, #4a4f5c, #1c1f26 55%, #0b0c10);
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+.rv-O {
+    background: radial-gradient(circle at 35% 30%, #ffffff, #f1ede3 55%, #cfc8b6);
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.14), inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 3px 6px rgba(0, 0, 0, 0.35);
+}
+
+.rv-hint {
+    width: 22%;
+    height: 22%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    animation: rv-hint-in 0.3s var(--ease-out);
+}
+@keyframes rv-hint-in { from { transform: scale(0); } to { transform: scale(1); } }
+
+.rv-disc.preview { opacity: 0.5; }
+/* Discs that would flip if the hovered move were played. */
+.rv-disc.will-flip { transform: scale(0.9); filter: brightness(1.15); outline: 2px dashed rgba(255, 255, 255, 0.7); outline-offset: 2px; }
+
+.rv-disc.placed { animation: rv-place 0.25s var(--ease-out); }
+@keyframes rv-place { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.rv-disc.flipping { animation: rv-flip 0.45s ease-in-out both; }
+@keyframes rv-flip {
+    0% { transform: rotateY(0deg); filter: brightness(1); }
+    50% { transform: rotateY(90deg) scale(1.1); filter: brightness(0.7); }
+    100% { transform: rotateY(0deg); filter: brightness(1); }
+}
+
+.rv-cell.faded .rv-disc { filter: saturate(0.5) brightness(0.6); opacity: 0.7; }
+.rv-cell.winning .rv-disc { box-shadow: 0 0 0 2px #fff, 0 0 12px 3px rgba(255, 255, 255, 0.5); }

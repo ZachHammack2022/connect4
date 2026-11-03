@@ -18,14 +18,19 @@ export interface AvailableGame {
     // Card/hero tint and the colour of each side's pieces.
     tint: string;
     sideColors: Record<Side, string>;
+    // Highlight colour for each side's seat when the piece colour won't show
+    // up as a border (e.g. black and white discs). Defaults to sideColors.
+    accentColors?: Record<Side, string>;
     modes: ModeOption[];
     // Modes that have an easy/medium/hard setting.
     difficultyModes: string[];
     // How each side is named on screen, e.g. "Red" in Connect 4.
     sideLabels: Record<Side, string>;
-    // Where a move lands on a flat, row-major board (for showing the human's
-    // move instantly), or -1 if the move isn't possible.
-    landingIndex: (board: number[], move: number, cols: number) => number;
+    // The board after `piece` (-1 X, 1 O) plays `move`, used to show the
+    // human's move instantly; null if the move isn't possible.
+    applyMove: (board: number[], move: number, cols: number, piece: number) => number[] | null;
+    // Pieces each side has on the board, for games scored by count.
+    score?: (board: number[]) => Record<Side, number>;
 }
 
 export interface ComingSoonGame {
@@ -37,6 +42,35 @@ export interface ComingSoonGame {
 }
 
 export type GameInfo = AvailableGame | ComingSoonGame;
+
+const place = (board: number[], cells: number[], piece: number) => {
+    const next = [...board];
+    cells.forEach((i) => { next[i] = piece; });
+    return next;
+};
+
+// Opponent discs that playing `cell` would flip in Reversi (mirrors the backend rules).
+export const reversiFlips = (board: number[], cell: number, cols: number, piece: number): number[] => {
+    if (board[cell] !== 0) return [];
+    const rows = board.length / cols;
+    const row = Math.floor(cell / cols);
+    const col = cell % cols;
+    const flipped: number[] = [];
+    for (const [dr, dc] of [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]) {
+        const line: number[] = [];
+        let r = row + dr;
+        let c = col + dc;
+        while (r >= 0 && r < rows && c >= 0 && c < cols && board[r * cols + c] === -piece) {
+            line.push(r * cols + c);
+            r += dr;
+            c += dc;
+        }
+        if (line.length && r >= 0 && r < rows && c >= 0 && c < cols && board[r * cols + c] === piece) {
+            flipped.push(...line);
+        }
+    }
+    return flipped;
+};
 
 export const GAMES: GameInfo[] = [
     {
@@ -56,12 +90,12 @@ export const GAMES: GameInfo[] = [
         ],
         difficultyModes: ['minimax', 'mcts'],
         sideLabels: { X: 'Red', O: 'Yellow' },
-        landingIndex: (board, column, cols) => {
+        applyMove: (board, column, cols, piece) => {
             // Discs fall to the lowest empty cell in the column.
             for (let index = board.length - cols + column; index >= 0; index -= cols) {
-                if (board[index] === 0) return index;
+                if (board[index] === 0) return place(board, [index], piece);
             }
-            return -1;
+            return null;
         },
     },
     {
@@ -79,9 +113,30 @@ export const GAMES: GameInfo[] = [
         ],
         difficultyModes: ['minimax'],
         sideLabels: { X: 'X', O: 'O' },
-        landingIndex: (board, cell) => (board[cell] === 0 ? cell : -1),
+        applyMove: (board, cell, _cols, piece) => (board[cell] === 0 ? place(board, [cell], piece) : null),
     },
-    { id: 'reversi', name: 'Reversi', tagline: 'Outflank and flip your opponent’s pieces.', status: 'coming-soon', tint: '#17a35b' },
+    {
+        id: 'reversi',
+        name: 'Reversi',
+        path: '/reversi',
+        tagline: 'Outflank and flip your opponent’s discs. Most discs at the end wins.',
+        status: 'available',
+        tint: '#17a35b',
+        sideColors: { X: '#20232b', O: '#f3f0e8' },
+        accentColors: { X: '#2fd27f', O: '#2fd27f' },
+        modes: [
+            { mode: 'human', label: 'Human' },
+            { mode: 'random', label: 'Random' },
+            { mode: 'minimax', label: 'Minimax' },
+        ],
+        difficultyModes: ['minimax'],
+        sideLabels: { X: 'Dark', O: 'Light' },
+        applyMove: (board, cell, cols, piece) => {
+            const flipped = reversiFlips(board, cell, cols, piece);
+            return flipped.length ? place(board, [cell, ...flipped], piece) : null;
+        },
+        score: (board) => ({ X: board.filter((c) => c === -1).length, O: board.filter((c) => c === 1).length }),
+    },
     { id: 'checkers', name: 'Checkers', tagline: 'Jump, capture and crown your pieces.', status: 'coming-soon', tint: '#d9582b' },
     { id: 'dots-and-boxes', name: 'Dots and Boxes', tagline: 'Draw lines, close boxes, claim the board.', status: 'coming-soon', tint: '#2fa7d8' },
     { id: 'gomoku', name: 'Gomoku', tagline: 'Five in a row on a big board.', status: 'coming-soon', tint: '#c68a2e' },

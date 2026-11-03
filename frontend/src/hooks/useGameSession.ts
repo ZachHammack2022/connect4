@@ -105,13 +105,13 @@ export const useGameSession = (game: AvailableGame, username: string) => {
 
     const move = async (moveIndex: number) => {
         if (!state || !humanToMove) return;
-        const landing = game.landingIndex(state.board, moveIndex, state.cols);
-        if (landing < 0) return;  // full column / taken cell: nothing to do
-        // Show the human's piece straight away and hand the turn over, rather
+        if (state.legal_moves && !state.legal_moves.includes(moveIndex)) return;
+        const piece = state.current_player === 'X' ? -1 : 1;
+        const board = game.applyMove(state.board, moveIndex, state.cols, piece);
+        if (!board) return;  // full column / taken cell: nothing to do
+        // Show the human's move straight away and hand the turn over, rather
         // than waiting for the response (which includes any AI reply).
-        const board = [...state.board];
-        board[landing] = state.current_player === 'X' ? -1 : 1;
-        setState({ ...state, board, current_player: state.current_player === 'X' ? 'O' : 'X' });
+        setState({ ...state, board, current_player: state.current_player === 'X' ? 'O' : 'X', legal_moves: [], passed: null });
         await withGame('making a move', (gameId) => api.makeMove(gameId, moveIndex));
     };
 

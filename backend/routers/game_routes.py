@@ -28,6 +28,9 @@ def game_state(game_id: str, game: TurnBasedGame):
         "difficulty1": game.player1.difficulty,
         "difficulty2": game.player2.difficulty,
         "winning_cells": game.winning_cells,
+        # Moves the side to move may play (empty once the game is over).
+        "legal_moves": [] if game.terminated else game.valid_actions(),
+        "passed": game.passed,
     }
 
 

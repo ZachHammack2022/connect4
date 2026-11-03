@@ -46,6 +46,10 @@ class TurnBasedGame:
     def valid_actions(self):
         return [action for action in range(self.num_actions) if self._is_valid_action(action)]
 
+    def ai_context(self):
+        """Extra keyword arguments for AI players' make_move (e.g. whose turn it is)."""
+        return {}
+
     def _is_board_full(self):
         return all(cell != ' ' for row in self.board for cell in row)
 
@@ -62,6 +66,8 @@ class TurnBasedGame:
         self.terminated = False
         self.winner = None
         self.winning_cells = []
+        # The side that had to pass on the last turn (games with passing only).
+        self.passed = None
         return self._get_obs()
 
     def render(self, mode='human', close=False):
@@ -109,7 +115,7 @@ class TurnBasedGame:
 
     async def ai_move(self, ai_player):
         legal = self.valid_actions()
-        ai_action = await ai_player.make_move(self._get_obs(), legal_moves=legal)
+        ai_action = await ai_player.make_move(self._get_obs(), legal_moves=legal, **self.ai_context())
 
         # Never let a misbehaving agent stall or crash the game: fall back to
         # a random legal move if it returns something illegal.
@@ -156,6 +162,7 @@ class TurnBasedGame:
             "terminated": self.terminated,
             "winner": self.winner,
             "winning_cells": self.winning_cells,
+            "passed": self.passed,
             "players": [
                 {"mode": player.name, "difficulty": player.difficulty}
                 for player in (self.player1, self.player2)
@@ -173,4 +180,5 @@ class TurnBasedGame:
         game.terminated = data["terminated"]
         game.winner = data["winner"]
         game.winning_cells = data["winning_cells"]
+        game.passed = data.get("passed")
         return game
