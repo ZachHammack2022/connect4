@@ -15,10 +15,13 @@ export interface AvailableGame {
     path: string;
     tagline: string;
     status: 'available';
+    // Card/hero tint and the colour of each side's pieces.
+    tint: string;
+    sideColors: Record<Side, string>;
     modes: ModeOption[];
     // Modes that have an easy/medium/hard setting.
     difficultyModes: string[];
-    // How each side is named on screen, e.g. "Red (X)" in Connect 4.
+    // How each side is named on screen, e.g. "Red" in Connect 4.
     sideLabels: Record<Side, string>;
     // Where a move lands on a flat, row-major board (for showing the human's
     // move instantly), or -1 if the move isn't possible.
@@ -30,6 +33,7 @@ export interface ComingSoonGame {
     name: string;
     tagline: string;
     status: 'coming-soon';
+    tint: string;
 }
 
 export type GameInfo = AvailableGame | ComingSoonGame;
@@ -41,6 +45,8 @@ export const GAMES: GameInfo[] = [
         path: '/connect4',
         tagline: 'Drop discs and line up four before your opponent does.',
         status: 'available',
+        tint: '#3354ff',
+        sideColors: { X: '#ff4d5e', O: '#ffc23d' },
         modes: [
             { mode: 'human', label: 'Human' },
             { mode: 'random', label: 'Random' },
@@ -49,7 +55,7 @@ export const GAMES: GameInfo[] = [
             { mode: 'dqn', label: 'DQN' },
         ],
         difficultyModes: ['minimax', 'mcts'],
-        sideLabels: { X: 'Red (X)', O: 'Yellow (O)' },
+        sideLabels: { X: 'Red', O: 'Yellow' },
         landingIndex: (board, column, cols) => {
             // Discs fall to the lowest empty cell in the column.
             for (let index = board.length - cols + column; index >= 0; index -= cols) {
@@ -62,8 +68,10 @@ export const GAMES: GameInfo[] = [
         id: 'tictactoe',
         name: 'Tic-Tac-Toe',
         path: '/tictactoe',
-        tagline: 'The classic: three in a row on a 3×3 grid. Can you beat a perfect AI?',
+        tagline: 'Three in a row on a 3×3 grid. Can you hold a perfect AI to a draw?',
         status: 'available',
+        tint: '#e0458f',
+        sideColors: { X: '#38c8ff', O: '#ff5fae' },
         modes: [
             { mode: 'human', label: 'Human' },
             { mode: 'random', label: 'Random' },
@@ -73,10 +81,10 @@ export const GAMES: GameInfo[] = [
         sideLabels: { X: 'X', O: 'O' },
         landingIndex: (board, cell) => (board[cell] === 0 ? cell : -1),
     },
-    { id: 'reversi', name: 'Reversi', tagline: 'Outflank and flip your opponent’s pieces.', status: 'coming-soon' },
-    { id: 'checkers', name: 'Checkers', tagline: 'Jump, capture and crown your pieces.', status: 'coming-soon' },
-    { id: 'dots-and-boxes', name: 'Dots and Boxes', tagline: 'Draw lines, close boxes, claim the board.', status: 'coming-soon' },
-    { id: 'gomoku', name: 'Gomoku', tagline: 'Five in a row on a big board.', status: 'coming-soon' },
+    { id: 'reversi', name: 'Reversi', tagline: 'Outflank and flip your opponent’s pieces.', status: 'coming-soon', tint: '#17a35b' },
+    { id: 'checkers', name: 'Checkers', tagline: 'Jump, capture and crown your pieces.', status: 'coming-soon', tint: '#d9582b' },
+    { id: 'dots-and-boxes', name: 'Dots and Boxes', tagline: 'Draw lines, close boxes, claim the board.', status: 'coming-soon', tint: '#2fa7d8' },
+    { id: 'gomoku', name: 'Gomoku', tagline: 'Five in a row on a big board.', status: 'coming-soon', tint: '#c68a2e' },
 ];
 
 export const AVAILABLE_GAMES = GAMES.filter((game): game is AvailableGame => game.status === 'available');

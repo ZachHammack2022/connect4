@@ -1,101 +1,99 @@
-import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import {
-    Box, Button, Card, CardActionArea, CardContent, Chip, Container, Grid, Stack, TextField, Typography,
-} from '@mui/material';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import GameArt from '../components/GameArt';
-import { GAMES, GameInfo } from '../games';
+import NameForm from '../components/NameForm';
+import { ArrowRight, Cpu, User } from '../components/Icons';
+import { AVAILABLE_GAMES, AvailableGame, ComingSoonGame, GAMES } from '../games';
+import './HomePage.css';
 
 interface HomePageProps {
     username: string;
     setUsername: (name: string) => void;
 }
 
-const NameForm: React.FC<HomePageProps> = ({ username, setUsername }) => {
-    const [editing, setEditing] = useState(!username);
-    const [name, setName] = useState(username);
+const tintStyle = (tint: string) => ({ '--tint': tint } as React.CSSProperties);
 
-    if (!editing) {
-        return (
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
-                <Typography>Playing as <strong>{username}</strong></Typography>
-                <Button size="small" onClick={() => setEditing(true)}>Change</Button>
-            </Stack>
-        );
-    }
+const FeatureCard: React.FC<{ game: AvailableGame; index: number }> = ({ game, index }) => {
+    const ais = game.modes.filter((m) => m.mode !== 'human').map((m) => m.label);
     return (
-        <Box
-            component="form"
-            onSubmit={(event: React.FormEvent) => {
-                event.preventDefault();
-                const trimmed = name.trim();
-                if (trimmed) {
-                    setUsername(trimmed);
-                    setEditing(false);
-                }
-            }}
-            sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}
-        >
-            <TextField label="Your name" size="small" value={name} onChange={(e) => setName(e.target.value)}
-                inputProps={{ maxLength: 255 }} helperText="Shown on the leaderboards. No account needed." />
-            <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start' }}>Save</Button>
-        </Box>
+        <Link to={game.path} className="feature-card" style={{ ...tintStyle(game.tint), animationDelay: `${index * 80}ms` }}>
+            <div className="feature-art">
+                <div className="feature-art-inner"><GameArt id={game.id} /></div>
+            </div>
+            <div className="feature-body">
+                <div className="feature-text">
+                    <h3>{game.name}</h3>
+                    <p>{game.tagline}</p>
+                    <div className="feature-tags">
+                        <span className="chip"><User /> 2 players</span>
+                        <span className="chip"><Cpu /> {ais.join(' · ')}</span>
+                    </div>
+                </div>
+                <span className="feature-go" aria-hidden="true"><ArrowRight /></span>
+            </div>
+        </Link>
     );
 };
 
-const GameCard: React.FC<{ game: GameInfo }> = ({ game }) => {
-    const available = game.status === 'available';
-    const content = (
-        <>
-            <Box sx={{ height: 140, p: 2, display: 'flex', justifyContent: 'center', bgcolor: 'action.hover' }}>
-                <Box sx={{ width: 120, filter: available ? 'none' : 'grayscale(0.7)', opacity: available ? 1 : 0.6 }}>
-                    <GameArt id={game.id} />
-                </Box>
-            </Box>
-            <CardContent sx={{ textAlign: 'left' }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} sx={{ mb: 0.5 }}>
-                    <Typography variant="h6" component="h3">{game.name}</Typography>
-                    {!available && <Chip label="Coming soon" size="small" sx={{ flexShrink: 0 }} />}
-                </Stack>
-                <Typography variant="body2" color="text.secondary">{game.tagline}</Typography>
-            </CardContent>
-        </>
-    );
+const SoonCard: React.FC<{ game: ComingSoonGame }> = ({ game }) => (
+    <div className="soon-card" style={tintStyle(game.tint)} aria-label={`${game.name}, coming soon`}>
+        <div className="soon-art"><GameArt id={game.id} /></div>
+        <div>
+            <div className="soon-title">
+                <h3>{game.name}</h3>
+                <span className="chip">Soon</span>
+            </div>
+            <p>{game.tagline}</p>
+        </div>
+    </div>
+);
+
+const HomePage: React.FC<HomePageProps> = ({ username, setUsername }) => {
+    const location = useLocation();
+    const comingSoon = GAMES.filter((g): g is ComingSoonGame => g.status === 'coming-soon');
+
     return (
-        <Card variant="outlined" sx={{ height: '100%' }} aria-disabled={!available}>
-            {available
-                ? <CardActionArea component={RouterLink} to={game.path} sx={{ height: '100%' }}>{content}</CardActionArea>
-                : content}
-        </Card>
-    );
-};
+        <div className="home">
+            <section className="container hero">
+                <div className="hero-art" aria-hidden="true">
+                    <div className="hero-tile hero-tile-1"><GameArt id="connect4" /></div>
+                    <div className="hero-tile hero-tile-2"><GameArt id="tictactoe" /></div>
+                    <span className="hero-disc hero-disc-red" />
+                    <span className="hero-disc hero-disc-yellow" />
+                </div>
+                <span className="eyebrow">No sign-up · Free to play</span>
+                <h1>Classic games.<br /><span className="hero-accent">Sharp opponents.</span></h1>
+                <p className="hero-sub">
+                    Challenge a friend on the same screen, or take on AIs from reckless to flawless.
+                    Pick a name to get on the leaderboards.
+                </p>
+                <div className="hero-name" id="name">
+                    {/* Remount when arriving via the header's name link so the field gets focus. */}
+                    <NameForm key={location.key} username={username} setUsername={setUsername}
+                        autoFocus={location.hash === '#name'} />
+                </div>
+            </section>
 
-const HomePage: React.FC<HomePageProps> = (props) => {
-    const available = GAMES.filter((g) => g.status === 'available');
-    const comingSoon = GAMES.filter((g) => g.status === 'coming-soon');
-    return (
-        <Container maxWidth="lg" sx={{ pb: 6 }}>
-            <Box sx={{ textAlign: 'center', my: 4 }}>
-                <Typography variant="h3" component="h1" gutterBottom>Pick a game</Typography>
-                <Typography color="text.secondary" sx={{ mb: 3 }}>
-                    Play against a friend on the same screen, or take on the AI opponents.
-                </Typography>
-                <NameForm {...props} />
-            </Box>
+            <section className="container home-section" aria-labelledby="play-now">
+                <div className="section-head">
+                    <h2 id="play-now">Play now</h2>
+                    <span className="section-count">{AVAILABLE_GAMES.length} games</span>
+                </div>
+                <div className="feature-grid">
+                    {AVAILABLE_GAMES.map((game, i) => <FeatureCard key={game.id} game={game} index={i} />)}
+                </div>
+            </section>
 
-            <Grid container spacing={3}>
-                {available.map((game) => (
-                    <Grid item xs={12} sm={6} md={4} key={game.id}><GameCard game={game} /></Grid>
-                ))}
-            </Grid>
-
-            <Typography variant="h5" component="h2" sx={{ mt: 6, mb: 2 }}>Coming soon</Typography>
-            <Grid container spacing={3}>
-                {comingSoon.map((game) => (
-                    <Grid item xs={12} sm={6} md={3} key={game.id}><GameCard game={game} /></Grid>
-                ))}
-            </Grid>
-        </Container>
+            <section className="container home-section" aria-labelledby="coming-soon">
+                <div className="section-head">
+                    <h2 id="coming-soon">On the way</h2>
+                    <span className="section-count">{comingSoon.length} in the works</span>
+                </div>
+                <div className="soon-grid">
+                    {comingSoon.map((game) => <SoonCard key={game.id} game={game} />)}
+                </div>
+            </section>
+        </div>
     );
 };
 

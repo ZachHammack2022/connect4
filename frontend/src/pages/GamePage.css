@@ -1,53 +1,134 @@
-/* Disc size scales down on narrow screens: 7 discs plus padding fit the viewport. */
-.game-layout {
-    --cell: min(56px, calc((100vw - 64px) / 7));
-    --gap: calc(var(--cell) * 0.12);
+.game-page { padding-top: 28px; animation: fade-up 0.45s var(--ease-out) both; }
+
+.game-top {
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
-    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
+.back-link { width: 44px; height: 44px; flex-shrink: 0; }
+.game-title { min-width: 0; }
+.game-title h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 800; letter-spacing: -0.035em; }
+.game-title p { margin-top: 2px; color: var(--text-muted); font-size: 14px; }
 
-.board-column {
+.play-area {
+    position: relative;
+    padding: 20px;
+    overflow: clip;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 16px;
+}
+.play-area::before {
+    /* soft tint glowing up behind the board */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(60% 55% at 50% 100%, color-mix(in srgb, var(--tint) 16%, transparent), transparent);
+    pointer-events: none;
+}
+.play-area > * { position: relative; }
+
+/* Desktop: seats either side of the board. */
+.table {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr) 250px;
+    grid-template-areas: 'x center o';
+    gap: 20px;
+    align-items: start;
+}
+.table-seat-x { grid-area: x; }
+.table-seat-o { grid-area: o; }
+.table-center { grid-area: center; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+/* In the side columns, the player choices read as a vertical list. */
+.table .seat-modes { flex-direction: column; flex-wrap: nowrap; }
+.table .seat-modes button { text-align: left; height: 34px; padding: 0 12px; }
+
+@media (max-width: 1080px) {
+    .table {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: 'x o' 'center center';
+        gap: 12px;
+    }
+    .table .seat-modes { flex-direction: row; flex-wrap: wrap; }
+    .table .seat-modes button { text-align: center; height: 30px; padding: 0 10px; }
+    .table-center { margin-top: 4px; }
 }
 
-.status {
+.status-bar {
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 40px;
-    margin-bottom: 8px;
+    gap: 16px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+}
+.status-turn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+}
+.status-turn .spinner { width: 18px; height: 18px; color: var(--text-muted); }
+
+.status-bar.is-over {
+    justify-content: space-between;
+    background: var(--surface-2);
+    border-color: var(--border);
+    animation: result-in 0.45s var(--ease-out);
+}
+.status-bar.tone-win { background: color-mix(in srgb, var(--success) 12%, var(--surface-2)); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+.status-bar.tone-loss { background: color-mix(in srgb, var(--danger) 10%, var(--surface-2)); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+.status-result { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.status-result .token { width: 28px; height: 28px; }
+.status-result div { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.status-result strong { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.status-result span { font-size: 13px; color: var(--text-muted); }
+@keyframes result-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
 }
 
-.mode-group {
+.board-stage {
+    container-type: inline-size;
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    min-width: 110px;
+    justify-content: center;
+    padding: 4px 0 8px;
+}
+.board-loading { display: grid; place-items: center; width: 100%; min-height: 360px; color: var(--text-muted); }
+.board-loading .spinner { width: 28px; height: 28px; }
+
+.play-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.play-hint { font-size: 13px; color: var(--text-faint); }
+
+.game-page > .leaderboard { margin-top: 24px; }
+@media (min-width: 760px) {
+    .game-page > .leaderboard .lb-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+    .game-page > .leaderboard .lb-footer .name-form { max-width: 460px; }
 }
 
-.difficulty-hidden { visibility: hidden; }
-
-.player-label {
-    font-weight: bold !important;
-}
-.connect4-side-X { color: #ef4444; }
-.connect4-side-O { color: #eab308; }
-.tictactoe-side-X { color: #38bdf8; }
-.tictactoe-side-O { color: #f472b6; }
-
-
-/* Phones: board on top, the two player panels side by side underneath. */
-@media (max-width: 700px) {
-    .board-column { order: 0; width: 100%; }
-    .mode-group-1 { order: 1; }
-    .mode-group-2 { order: 2; }
-    .game-layout { padding: 0 12px; }
-    .mode-group { min-width: 0; flex: 1 1 40%; max-width: 200px; }
-    .difficulty-hidden { display: none; }
+@media (max-width: 600px) {
+    .game-page { padding-top: 16px; }
+    .game-top { gap: 12px; margin-bottom: 14px; }
+    .back-link { width: 38px; height: 38px; }
+    .game-title p { font-size: 13px; }
+    .play-area { padding: 12px; gap: 12px; border-radius: var(--radius); }
+    .table { gap: 8px; }
+    .status-bar { min-height: 52px; padding: 8px 10px; }
+    .status-turn { font-size: 17px; }
+    .status-bar.is-over { flex-wrap: wrap; justify-content: center; }
+    .status-result strong { font-size: 19px; }
+    .play-footer { flex-direction: column-reverse; align-items: stretch; text-align: center; }
 }
