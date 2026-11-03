@@ -14,6 +14,41 @@
 }
 .lb-icon svg { width: 20px; height: 20px; }
 
+.lb-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.lb-filters button {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.lb-filters button:hover:not([aria-pressed='true']) { color: var(--text); border-color: var(--border-strong); }
+.lb-filters button[aria-pressed='true'] { background: var(--text); color: var(--bg); border-color: transparent; }
+
+.lb-streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 7px 1px 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, #ff7a3d 16%, transparent);
+    color: #ff7a3d;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+}
+.lb-streak svg { width: 12px; height: 12px; }
+
 .lb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 
 .lb-row {
@@ -46,10 +81,9 @@
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
 }
+.lb-username-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-you {
     font-size: 10px;
     font-weight: 700;

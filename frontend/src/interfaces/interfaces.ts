@@ -3,6 +3,17 @@ export interface LeaderboardEntry {
     wins: number;
     losses: number;
     draws: number;
+    current_streak?: number;
+    best_streak?: number;
+}
+
+export interface LeaderboardFilter {
+    opponent: string;
+    difficulty: Difficulty | null;
+}
+
+export interface OpponentSummary extends LeaderboardFilter {
+    games: number;
 }
 
 export interface GameState {

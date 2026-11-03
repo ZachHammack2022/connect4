@@ -30,6 +30,22 @@ SCHEMA_STATEMENTS = [
     "ALTER TABLE games DROP CONSTRAINT IF EXISTS games_username_key",
     "DROP INDEX IF EXISTS games_username_key",
     "CREATE UNIQUE INDEX IF NOT EXISTS games_username_game_type_key ON games (username, game_type)",
+    # Win streaks per player and game.
+    "ALTER TABLE games ADD COLUMN IF NOT EXISTS current_streak INT NOT NULL DEFAULT 0",
+    "ALTER TABLE games ADD COLUMN IF NOT EXISTS best_streak INT NOT NULL DEFAULT 0",
+    # Every result with the AI it was against, for per-opponent leaderboards.
+    """
+    CREATE TABLE IF NOT EXISTS game_results (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        game_type VARCHAR(50) NOT NULL,
+        opponent VARCHAR(50) NOT NULL,
+        difficulty VARCHAR(10),
+        outcome VARCHAR(4) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS game_results_game_opponent ON game_results (game_type, opponent, difficulty)",
 ]
 
 
