@@ -37,7 +37,6 @@ class Connect4Env(gym.Env):
         random.seed(seed)
     
     async def set_mode(self, player_number, player_mode):
-        print(player_number,player_mode)
         if player_mode not in self.player_modes:
             raise ValueError(f"Invalid player type: {player_mode}")
 
@@ -45,24 +44,24 @@ class Connect4Env(gym.Env):
         if player_number == 1:
             self.player1 = player_class()
         elif player_number == 2:
-            self.player2 = player_class()  
+            self.player2 = player_class()
         else:
             raise ValueError("Invalid player number")
-        
-        if self.check_if_ai_move():
-            await self.run_ai_turns()
-        
+
+        # If the newly selected player is an AI whose turn it is, let it move.
+        await self.run_ai_turns()
+
     def step(self, action):
-        # Check if action is valid
-        if not self._is_valid_action(action):
-            return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}
-        
         # Check if the game is already terminated
         if self.terminated:
             return self._get_obs(), -10, self.terminated, {"msg": "Game terminated."}
-        
+
+        # Check if action is valid
+        if not self._is_valid_action(action):
+            return self._get_obs(), -2, True, {"msg": "Invalid action, column full."}
+
         self._make_move(action)
-        
+
         # Check if the move resulted in a win
         won = self.check_winner(self.current_player)
         if won:
@@ -79,59 +78,44 @@ class Connect4Env(gym.Env):
         # Return the updated game state
         return self._get_obs(), reward, self.terminated, {"winner": self.winner}
 
-    async def ai_move(self,ai_player):
-        # Get the observation for the current AI player
-        ai_observation = self._get_obs()
+    async def ai_move(self, ai_player):
+        ai_action = await ai_player.make_move(self._get_obs())
 
-        # Make the AI player's move
-        ai_action = await ai_player.make_move(ai_observation)
+        # Never let a misbehaving agent stall or crash the game: fall back to
+        # a random legal column if it returns something illegal.
+        if ai_action is None or not self._is_valid_action(ai_action):
+            ai_action = random.choice(self.valid_actions())
 
-        # Call the step function again for the AI's move
-        if not self._is_valid_action(ai_action):
-            return
-        obs, reward, self.terminated, info = self.step(ai_action)
+        return self.step(ai_action)
 
-        return (obs, reward, self.terminated, info)
-    
     def get_ai_player(self):
-        if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
-            ai_player = self.player1
-        elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
-            ai_player = self.player2
-        return ai_player
-            
-    def check_if_ai_move(self):
-        if self.current_player == 'X' and isinstance(self.player1, AIPlayer):
-            return True
-        elif self.current_player == 'O' and isinstance(self.player2, AIPlayer):
-            return True
-        
-        return False
-    
-    async def run_ai_turns(self):
-        while not self.terminated:
-            if not self.check_if_ai_move():
-                break
-           
-            ai_player = self.get_ai_player()
-            obs, reward, self.terminated, info = await self.ai_move(ai_player)
-            
-            # Exit the loop if the game has terminated
-            if self.terminated:
-                break
-    
-        return obs, reward, self.terminated, info
-        
-    async def play_turn(self, action):
-        # Call the basic step function, which is synchronous in this case
-        obs, reward, self.terminated, info = self.step(action)
-        
-        if self.check_if_ai_move() and not self.terminated:
-            obs, reward, self.terminated, info = await self.run_ai_turns()
-            
-        return obs, reward, self.terminated, info
+        """Return the AI whose turn it is, or None if it is a human's turn."""
+        player = self.player1 if self.current_player == 'X' else self.player2
+        return player if isinstance(player, AIPlayer) else None
 
-    
+    def check_if_ai_move(self):
+        return self.get_ai_player() is not None
+
+    async def run_ai_turns(self):
+        """Play AI moves until it is a human's turn or the game ends."""
+        result = (self._get_obs(), 0, self.terminated, {"winner": self.winner})
+        while not self.terminated:
+            ai_player = self.get_ai_player()
+            if ai_player is None:
+                break
+            result = await self.ai_move(ai_player)
+        return result
+
+    async def play_turn(self, action):
+        self.step(action)
+        return await self.run_ai_turns()
+
+    async def reset_and_start(self):
+        """Reset the board and, if player 1 is an AI, let it make its opening move."""
+        self.reset()
+        await self.run_ai_turns()
+        return self._get_obs()
+
     def reset(self):
         self.board = [[' ' for _ in range(7)] for _ in range(6)]
         self.current_player = 'X'
@@ -190,7 +174,10 @@ class Connect4Env(gym.Env):
         return [[symbol_map[cell] for cell in row] for row in board]
 
     def _is_valid_action(self, action):
-        return self.board[0][action] == ' ' 
+        return isinstance(action, int) and 0 <= action < self.NUM_MOVES and self.board[0][action] == ' '
+
+    def valid_actions(self):
+        return [action for action in range(self.NUM_MOVES) if self._is_valid_action(action)]
 
     def _is_board_full(self):
         return all(cell != ' ' for row in self.board for cell in row)

@@ -4,13 +4,12 @@ export interface LeaderboardEntry {
     losses: number;
 }
 
-export interface MoveSuccessResponse {
+export interface GameState {
+    game_id: string;
     board: number[];
     current_player: string;
     done: boolean;
-    winner?: string;
-  }
-
-export interface ErrorResponse {
-  message:string;
+    winner?: string | null;
+    mode1: string;
+    mode2: string;
 }

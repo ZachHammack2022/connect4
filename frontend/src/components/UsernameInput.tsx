@@ -12,7 +12,10 @@ const UsernameInput: React.FC<UsernameInputProps> = ({ setUsername }) => {
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setUsername(name);
+        const trimmed = name.trim();
+        if (trimmed) {
+            setUsername(trimmed);
+        }
     };
 
     return (

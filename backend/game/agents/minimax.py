@@ -1,155 +1,123 @@
+import asyncio
 from backend.game.agents.player import AIPlayer
-from backend.game.connect4_logic import check_positive_horizontal,check_negative_horizontal,check_vertical,check_horizontal
+from backend.game.connect4_logic import check_positive_horizontal, check_negative_horizontal, check_vertical, check_horizontal
+
+ROWS, COLS = 6, 7
+WIN_SCORE = 1_000_000
+# Explore centre columns first: they are usually the strongest moves, which
+# makes alpha-beta pruning far more effective.
+MOVE_ORDER = [3, 2, 4, 1, 5, 0, 6]
+
 
 class MinimaxPlayer(AIPlayer):
-    def __init__(self):
+    def __init__(self, depth=5):
         super().__init__(name="minimax", display_name="Minimax")
-        self.depth = 5
-        # Other initialization, if needed
-    
-    def check_winner(self,player,board):
- 
-        if check_horizontal(board,player) or \
-            check_vertical(board,player) or \
-            check_positive_horizontal(board,player) or \
-            check_negative_horizontal(board,player):
-            return True
-        
-        return False
-    
-    def reconstruct_board(self,flat_board):
-        rows, cols = 6, 7
-        board = []
+        self.depth = depth
 
-        for i in range(rows):
-            row = flat_board[i * cols:(i + 1) * cols]
-            board.append(row)
+    def check_winner(self, player, board):
+        return bool(check_horizontal(board, player) or
+                    check_vertical(board, player) or
+                    check_positive_horizontal(board, player) or
+                    check_negative_horizontal(board, player))
 
-        return board
-    
-    def convert_to_symbols(self,board):
+    def reconstruct_board(self, flat_board):
+        return [list(flat_board[i * COLS:(i + 1) * COLS]) for i in range(ROWS)]
+
+    def convert_to_symbols(self, board):
         symbol_map = {-1: 'X', 0: ' ', 1: 'O'}
         return [[symbol_map[cell] for cell in row] for row in board]
 
-    def evaluate_board(self, board, current_player):
-        opponent = 'O' if current_player == 'X' else 'X'
-        player_win = self.check_winner(current_player, board)
-        opponent_win = self.check_winner(opponent, board)
+    def obs_to_board(self, obs):
+        return self.convert_to_symbols(self.reconstruct_board(obs))
 
-        if player_win:
-            return 1  # Win for the current player
-        elif opponent_win:
-            return -1  # Loss for the current player
-        else:
-            return 0  # Neutral or draw state
-
-
-    def is_terminal_node(self, board, current_player):
-        # Check if the board is in a terminal state
-        if self.evaluate_board(board, current_player) != 0:
-            return True
-        if len(self.get_valid_moves(board)) == 0:
-            return True
-        return False
-        
+    def _is_valid_action(self, action, board):
+        return board[0][action] == ' '
 
     def get_valid_moves(self, board):
-        # Get a list of valid moves (column indices) that can be played
-        actions = []
-        for action in [0,1,2,3,4,5,6]:
-            if self._is_valid_action(action,board):
-                actions.append(action)
-        return actions
+        return [move for move in MOVE_ORDER if self._is_valid_action(move, board)]
 
-    def minimax(self, board, depth, alpha, beta, maximizing_player, current_player):
-        if depth == 0 or self.is_terminal_node(board, current_player):
-            return self.evaluate_board(board, current_player)
-
-        if maximizing_player:
-            max_eval = float('-inf')
-            for move in self.get_valid_moves(board):
-                new_board = self.simulate_move(board, move, current_player)
-                evaluation = self.minimax(new_board, depth - 1, alpha, beta, False, current_player)
-                max_eval = max(max_eval, evaluation)
-                alpha = max(alpha, evaluation)
-                if beta <= alpha:
-                    break
-            return max_eval  # Correctly indented
-        else:
-            min_eval = float('inf')
-            opponent = 'O' if current_player == 'X' else 'X'
-            for move in self.get_valid_moves(board):
-                new_board = self.simulate_move(board, move, opponent)
-                evaluation = self.minimax(new_board, depth - 1, alpha, beta, True, current_player) # was opponent, think it should be current player
-                min_eval = min(min_eval, evaluation)
-                beta = min(beta, evaluation)
-                if beta <= alpha:
-                    break
-            return min_eval  # Correctly indented
-
-    
     def simulate_move(self, board, move, player):
-        # Assuming move is the column number and player is either 'X' or 'O'
-        new_board = [row[:] for row in board]  # Deep copy of the board
+        new_board = [row[:] for row in board]
         for row in reversed(new_board):
-            if row[move] == ' ':  # Find the first empty slot in the column
+            if row[move] == ' ':
                 row[move] = player
                 break
         return new_board
 
+    # ---- heuristic -------------------------------------------------------
+    @staticmethod
+    def _score_window(window, me, opp):
+        mine, theirs, empty = window.count(me), window.count(opp), window.count(' ')
+        if mine == 3 and empty == 1:
+            return 5
+        if mine == 2 and empty == 2:
+            return 2
+        if theirs == 3 and empty == 1:
+            return -4
+        return 0
 
+    def heuristic(self, board, me):
+        """Static evaluation of a non-terminal board from `me`'s point of view."""
+        opp = 'O' if me == 'X' else 'X'
+        score = 3 * [board[r][COLS // 2] for r in range(ROWS)].count(me)
+        for r in range(ROWS):
+            for c in range(COLS):
+                for dr, dc in ((0, 1), (1, 0), (1, 1), (-1, 1)):
+                    end_r, end_c = r + 3 * dr, c + 3 * dc
+                    if 0 <= end_r < ROWS and end_c < COLS:
+                        window = [board[r + i * dr][c + i * dc] for i in range(4)]
+                        score += self._score_window(window, me, opp)
+        return score
+
+    # ---- search ----------------------------------------------------------
+    def minimax(self, board, depth, alpha, beta, maximizing, me):
+        """Score `board` from `me`'s perspective. `maximizing` is True when it is `me` to move."""
+        opp = 'O' if me == 'X' else 'X'
+        # Prefer faster wins and slower losses by scaling with remaining depth.
+        if self.check_winner(me, board):
+            return WIN_SCORE + depth
+        if self.check_winner(opp, board):
+            return -WIN_SCORE - depth
+        moves = self.get_valid_moves(board)
+        if not moves:
+            return 0  # draw
+        if depth == 0:
+            return self.heuristic(board, me)
+
+        if maximizing:
+            value = float('-inf')
+            for move in moves:
+                value = max(value, self.minimax(self.simulate_move(board, move, me), depth - 1, alpha, beta, False, me))
+                alpha = max(alpha, value)
+                if alpha >= beta:
+                    break
+        else:
+            value = float('inf')
+            for move in moves:
+                value = min(value, self.minimax(self.simulate_move(board, move, opp), depth - 1, alpha, beta, True, me))
+                beta = min(beta, value)
+                if alpha >= beta:
+                    break
+        return value
 
     async def make_move(self, obs):
-        # Convert the observation to a board state
+        # The search is CPU-bound; run it in a thread so other players'
+        # requests keep being served while the AI thinks.
+        return await asyncio.to_thread(self.best_move, obs)
+
+    def best_move(self, obs):
         board = self.obs_to_board(obs)
 
-        # Determine if the Minimax player is 'X' or 'O'
-        num_X = sum(cell == 'X' for row in board for cell in row)
-        num_O = sum(cell == 'O' for row in board for cell in row)
-        self.current_player = 'X' if num_X == num_O else 'O'
+        # X always moves first, so equal piece counts means it is X's turn.
+        num_x = sum(cell == 'X' for row in board for cell in row)
+        num_o = sum(cell == 'O' for row in board for cell in row)
+        me = 'X' if num_x == num_o else 'O'
 
-        # Initialize variables to store the best score and the corresponding best move
-        best_score = float('-inf') if self.current_player == 'X' else float('inf')
-        best_move = None
-
-        # Iterate over all valid moves to find the best one
+        best_score, best_move = float('-inf'), None
         for move in self.get_valid_moves(board):
-            # Simulate the move on a copy of the board
-            temp_board = self.simulate_move(board, move, self.current_player)
-
-            # Use the minimax algorithm to evaluate the move
-            score = self.minimax(temp_board, self.depth, float('-inf'), float('inf'),True,self.current_player)
-
-            # Update the best score and move if this move is better
-            if self.current_player == 'X' and score > best_score:
-                best_score = score
-                best_move = move
-            elif self.current_player == 'O' and score < best_score:
-                best_score = score
-                best_move = move
-
-        # Return the best move found
+            # After our move it is the opponent's turn, i.e. a minimizing node.
+            score = self.minimax(self.simulate_move(board, move, me), self.depth - 1,
+                                 float('-inf'), float('inf'), False, me)
+            if score > best_score:
+                best_score, best_move = score, move
         return best_move
-
-
-
-    def obs_to_board(self, obs):
-        # Convert the observation to your board representation
-        return self.convert_to_symbols(self.reconstruct_board(obs))
-    
-    def _is_valid_action(self, action,board):
-        return board[0][action] == ' ' 
-
-if __name__ == '__main__':
-    board = [0,0,0,0,-1,0,0, \
-             0,0,0,0,1,0,0, \
-             0,0,0,0,-1,0,0, \
-             0,0,0,0,1,0,0, \
-             0,0,0,0,-1,0,0, \
-             0,0,0,0,1,0,-1, \
-            ]
-    player = MinimaxPlayer()
-    print(player.obs_to_board(board))
-    new_board = player.obs_to_board(board)
-
-    print(f"valid moves: {player.get_valid_moves(new_board)}")

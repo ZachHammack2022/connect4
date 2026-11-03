@@ -1,84 +1,55 @@
 import axios from 'axios';
-import { LeaderboardEntry,MoveSuccessResponse,ErrorResponse } from '../interfaces/interfaces';
+import { GameState, LeaderboardEntry } from '../interfaces/interfaces';
 
-
-export const useFetchLeaderboard = () => {
-    const fetchLeaderboard = async () => {
-        try {
-            const response = await axios.get('/leaderboard/');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
-
-    return { fetchLeaderboard };
+// Extracts a readable message from an API error (FastAPI returns `{ detail }`).
+export const getErrorMessage = (error: unknown): string => {
+    if (axios.isAxiosError(error)) {
+        const detail = error.response?.data?.detail;
+        if (typeof detail === 'string') return detail;
+        if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
+        return error.message;
+    }
+    return error instanceof Error ? error.message : String(error);
 };
 
-// useSubmitGameResult hook
-export const useSubmitGameResult = (username: string, fetchLeaderboard: () => Promise<LeaderboardEntry[]>) => {
-    const submitGameResult = async (won: boolean) => {
-        if (!username) return;
-        try {
-            await axios.post('/submit_game/', { username, won });
-            return await fetchLeaderboard();
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { submitGameResult };
+export const isNotFound = (error: unknown): boolean =>
+    axios.isAxiosError(error) && error.response?.status === 404;
+
+// ---- leaderboard ---------------------------------------------------------
+
+export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/');
+    return response.data;
 };
 
-// useFetchGameState hook
-export const useFetchGameState = () => {
-    const fetchGameState = async () => {
-        try {
-            const response = await axios.get('/state');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { fetchGameState };
+export const submitGameResult = async (username: string, won: boolean): Promise<LeaderboardEntry[]> => {
+    await axios.post('/submit_game/', { username, won });
+    return fetchLeaderboard();
 };
 
-// useChangeMode hook
-export const useChangeMode = () => {
-    const handleChangeMode = async (newMode: string,player:number) => {
-        const response = await axios.post('/set_mode', { mode: newMode,player:player });
-        return response.data;
-    };
-    return { handleChangeMode };
+// ---- games ---------------------------------------------------------------
+
+export const createGame = async (): Promise<GameState> => {
+    const response = await axios.post<GameState>('/games');
+    return response.data;
 };
 
-// useHandleColumnClick hook
-export const useHandleColumnClick = () => {
-    const handleColumnClick = async (column: number) => {
-        try {
-            const response = await axios.post<MoveSuccessResponse>('/move', { column });
-            return response.data;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                // If it's an Axios error, extract and throw the ErrorResponse
-                throw error.response?.data as ErrorResponse;
-            }
-            // If it's not an Axios error, throw a generic error object
-            throw new Error("An unknown error occurred while handling column click.");
-        }
-    };
-    return { handleColumnClick };
+export const fetchGameState = async (gameId: string): Promise<GameState> => {
+    const response = await axios.get<GameState>(`/games/${gameId}`);
+    return response.data;
 };
 
+export const makeMove = async (gameId: string, column: number): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/move`, { column });
+    return response.data;
+};
 
-// useResetGame hook
-export const useResetGame = () => {
-    const resetGame = async () => {
-        try {
-            const response = await axios.post('/reset');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { resetGame };
+export const changeMode = async (gameId: string, mode: string, player: number): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/mode`, { mode, player });
+    return response.data;
+};
+
+export const resetGame = async (gameId: string): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/reset`);
+    return response.data;
 };

@@ -1,14 +1,25 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import game_routes, db_routes
 from backend.dependencies import get_database
-from backend.types.db_types import AppLifespan
+from backend.db import ensure_schema
 
-app = FastAPI()
 database = get_database()
-print("database url: ",database.url)
-lifespan = AppLifespan(app, database)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Connect to the database on startup and disconnect on shutdown.
+    await database.connect()
+    await ensure_schema(database)
+    try:
+        yield
+    finally:
+        await database.disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Add middleware configurations
 app.add_middleware(
@@ -22,7 +33,3 @@ app.add_middleware(
 # Include routers
 app.include_router(game_routes.router)
 app.include_router(db_routes.router)
-
-# Lifespan events for database connection
-app.add_event_handler("startup", lifespan.startup)
-app.add_event_handler("shutdown", lifespan.shutdown)
