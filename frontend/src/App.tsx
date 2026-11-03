@@ -6,7 +6,7 @@ import GameBoard from './components/GameBoard'; // Your existing GameBoard compo
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import "./App.css"
-import { GameState, LeaderboardEntry } from './interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry } from './interfaces/interfaces';
 import * as api from './hooks/useApi';
 import { getErrorMessage, isNotFound } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
@@ -35,6 +35,14 @@ function App() {
     const [winner, setWinner] = useState<string | null>(null);
     const [mode1, setMode1] = useState<string>("human")
     const [mode2, setMode2] = useState<string>("human")
+    const [difficulty1, setDifficulty1] = useState<Difficulty | null>(null);
+    const [difficulty2, setDifficulty2] = useState<Difficulty | null>(null);
+    const [winningCells, setWinningCells] = useState<[number, number][]>([]);
+    // True while a game request is in flight (including the AI thinking).
+    const [busy, setBusy] = useState(false);
+    const busyRef = useRef(false);
+    // Each side remembers its last difficulty so switching AI keeps it.
+    const lastDifficulty = useRef<Record<number, Difficulty>>({ 1: 'medium', 2: 'medium' });
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mode, setMode] = useState<'light' | 'dark'>('dark');
@@ -72,6 +80,11 @@ function App() {
       setWinner(state.winner || null);
       setMode1(state.mode1);
       setMode2(state.mode2);
+      setDifficulty1(state.difficulty1);
+      setDifficulty2(state.difficulty2);
+      if (state.difficulty1) lastDifficulty.current[1] = state.difficulty1;
+      if (state.difficulty2) lastDifficulty.current[2] = state.difficulty2;
+      setWinningCells(state.winning_cells || []);
 
       const justFinished = state.done && !gameOverRef.current;
       gameOverRef.current = state.done;
@@ -95,6 +108,10 @@ function App() {
     // Runs a request against the current game. If the server no longer knows
     // the game (it expired or the server restarted), start a fresh one.
     const withGame = async (action: string, request: (gameId: string) => Promise<GameState>) => {
+        // Ignore clicks while a request is already running (e.g. the AI is thinking).
+        if (busyRef.current) return;
+        busyRef.current = true;
+        setBusy(true);
         try {
             if (!gameIdRef.current) {
                 await startNewGame();
@@ -110,15 +127,27 @@ function App() {
                 }
             } else {
                 setError(`Error while ${action}: ${getErrorMessage(error)}`);
+                // Undo any optimistic update by reloading the real state.
+                try {
+                    if (gameIdRef.current) updateGame(await api.fetchGameState(gameIdRef.current));
+                } catch { /* keep the error already shown */ }
             }
+        } finally {
+            busyRef.current = false;
+            setBusy(false);
         }
     };
 
-    const handleModeChange = (newMode:string, player:number) =>
-        withGame(`changing mode for player ${player}`, (gameId) => api.changeMode(gameId, newMode, player));
+    const handleModeChange = (newMode:string, player:number, difficulty?: Difficulty) =>
+        withGame(`changing mode for player ${player}`, (gameId) =>
+            api.changeMode(gameId, newMode, player, difficulty ?? lastDifficulty.current[player]));
+
+    const handleDifficultyChange = (player: number, difficulty: Difficulty) =>
+        handleModeChange(player === 1 ? mode1 : mode2, player, difficulty);
 
     const onColumnClick = async (column:number) => {
-          if (board.length === 0) {
+          const humanToMove = (currentPlayer === 'X' ? mode1 : mode2) === 'human';
+          if (board.length === 0 || busyRef.current || (!gameOver && !humanToMove)) {
             return;
           }
           if (isColumnFull(column) ) {
@@ -129,6 +158,13 @@ function App() {
               setError("The game is over. Reset the game to play again.");
               return;
             }
+          // Show the human's disc straight away and hand the turn over, rather
+          // than waiting for the response (which includes the AI's reply).
+          const landingRow = board.map((row) => row[column]).lastIndexOf(0);
+          setBoard(board.map((row, r) => r === landingRow
+              ? row.map((cell, c) => (c === column ? (currentPlayer === 'X' ? -1 : 1) : cell))
+              : row));
+          setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
           await withGame('making a move', (gameId) => api.makeMove(gameId, column));
     };
 
@@ -220,7 +256,7 @@ const buttons2 = [
                 
                 {/* <hr></hr> */}
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} className="gameboard-padding">
+                    <Grid item xs={12} md={7} className="gameboard-padding">
                         {!username && <UsernameInput setUsername={setUsername} />}
                         {username && (
                           <GameBoard 
@@ -228,18 +264,23 @@ const buttons2 = [
                             currentPlayer={currentPlayer}
                             gameOver={gameOver}
                             winner={winner}
+                            busy={busy}
                             handleColumnClick={onColumnClick}
                             buttons1={buttons1}
                             currentMode1={mode1}
                             buttons2={buttons2}
                             currentMode2={mode2}
+                            difficulty1={difficulty1}
+                            difficulty2={difficulty2}
+                            onDifficultyChange={handleDifficultyChange}
+                            winningCells={winningCells}
                             resetGame={onResetGame}
                           />
                         )}
                     </Grid>
 
 
-                    <Grid item xs={12} sm={6} className="leaderboard-padding">
+                    <Grid item xs={12} md={5} className="leaderboard-padding">
                       <Leaderboard data={leaderboardData} />
                     </Grid>
                 </Grid>

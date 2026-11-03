@@ -1,0 +1,104 @@
+/* Disc size scales down on narrow screens: 7 discs plus padding fit the viewport. */
+.game-layout {
+    --cell: min(56px, calc((100vw - 64px) / 7));
+    --gap: calc(var(--cell) * 0.12);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.board-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    margin-bottom: 8px;
+}
+
+.mode-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 110px;
+}
+
+.difficulty-hidden { visibility: hidden; }
+
+.player-label {
+    font-weight: bold !important;
+}
+.disc-red-text { color: #ef4444; }
+.disc-yellow-text { color: #eab308; }
+
+.board {
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--gap);
+    padding: var(--gap);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    overflow: hidden; /* clip discs while they drop in from above */
+}
+
+.board-row {
+    display: flex;
+    gap: var(--gap);
+}
+
+.hole {
+    width: var(--cell);
+    height: var(--cell);
+    border-radius: 50%;
+    background: #0f172a;
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.board-active .hole { cursor: pointer; }
+.hole:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+.disc-red { background: radial-gradient(circle at 35% 35%, #f87171, #dc2626 60%, #991b1b); }
+.disc-yellow { background: radial-gradient(circle at 35% 35%, #fde047, #eab308 60%, #a16207); }
+
+.preview { opacity: 0.4; }
+.faded { opacity: 0.6; }
+.winning {
+    box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255, 255, 255, 0.8);
+    transform: scale(1.06);
+    animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+/* Discs fall from above the board to their row. */
+.dropping {
+    animation: drop calc(0.12s + var(--drop-rows) * 0.05s) cubic-bezier(0.5, 0, 1, 1);
+}
+@keyframes drop {
+    from { transform: translateY(calc(var(--drop-rows) * (var(--cell) + var(--gap)) * -1)); }
+    to { transform: translateY(0); }
+}
+@keyframes pulse {
+    from { box-shadow: 0 0 0 3px #fff, 0 0 6px 2px rgba(255, 255, 255, 0.5); }
+    to { box-shadow: 0 0 0 3px #fff, 0 0 18px 6px rgba(255, 255, 255, 0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dropping, .winning { animation: none; }
+}
+
+/* Phones: board on top, the two player panels side by side underneath. */
+@media (max-width: 700px) {
+    .board-column { order: 0; width: 100%; }
+    .mode-group-1 { order: 1; }
+    .mode-group-2 { order: 2; }
+    .game-layout { padding: 0 12px; }
+    .mode-group { min-width: 0; flex: 1 1 40%; max-width: 200px; }
+    .difficulty-hidden { display: none; }
+}

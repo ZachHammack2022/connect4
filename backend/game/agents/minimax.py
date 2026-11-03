@@ -1,4 +1,5 @@
 import asyncio
+import random
 from backend.game.agents.player import AIPlayer
 from backend.game.connect4_logic import check_positive_horizontal, check_negative_horizontal, check_vertical, check_horizontal
 
@@ -9,10 +10,22 @@ WIN_SCORE = 1_000_000
 MOVE_ORDER = [3, 2, 4, 1, 5, 0, 6]
 
 
+# Search depth (plies) and chance of playing a random move, per difficulty.
+# Depth alone separates the levels poorly (depth 2 holds its own against 4),
+# so easy also makes occasional random moves to stay beatable.
+DIFFICULTY_SETTINGS = {
+    "easy": {"depth": 2, "random_move_chance": 0.35},
+    "medium": {"depth": 4, "random_move_chance": 0.0},
+    "hard": {"depth": 6, "random_move_chance": 0.0},
+}
+
+
 class MinimaxPlayer(AIPlayer):
-    def __init__(self, depth=5):
-        super().__init__(name="minimax", display_name="Minimax")
-        self.depth = depth
+    def __init__(self, difficulty="medium", depth=None):
+        super().__init__(name="minimax", display_name="Minimax", difficulty=difficulty)
+        settings = DIFFICULTY_SETTINGS[self.difficulty]
+        self.depth = depth or settings["depth"]
+        self.random_move_chance = 0.0 if depth else settings["random_move_chance"]
 
     def check_winner(self, player, board):
         return bool(check_horizontal(board, player) or
@@ -113,11 +126,17 @@ class MinimaxPlayer(AIPlayer):
         num_o = sum(cell == 'O' for row in board for cell in row)
         me = 'X' if num_x == num_o else 'O'
 
-        best_score, best_move = float('-inf'), None
-        for move in self.get_valid_moves(board):
+        moves = self.get_valid_moves(board)
+        if not moves:
+            return None
+        if random.random() < self.random_move_chance:
+            return random.choice(moves)
+
+        scores = {}
+        for move in moves:
             # After our move it is the opponent's turn, i.e. a minimizing node.
-            score = self.minimax(self.simulate_move(board, move, me), self.depth - 1,
-                                 float('-inf'), float('inf'), False, me)
-            if score > best_score:
-                best_score, best_move = score, move
-        return best_move
+            scores[move] = self.minimax(self.simulate_move(board, move, me), self.depth - 1,
+                                        float('-inf'), float('inf'), False, me)
+        # Break ties randomly so games against the AI aren't always identical.
+        best_score = max(scores.values())
+        return random.choice([move for move, score in scores.items() if score == best_score])
