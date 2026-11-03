@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, User } from './Icons';
+import { Moon, Sun, User, Volume, VolumeOff } from './Icons';
 import type { Theme } from '../App';
 
 interface HeaderProps {
     username: string;
     theme: Theme;
     onToggleTheme: () => void;
+    muted: boolean;
+    onToggleMuted: () => void;
 }
 
 // Four discs on a diagonal: the Game Room mark.
@@ -20,7 +22,7 @@ export const LogoMark: React.FC = () => (
     </svg>
 );
 
-const Header: React.FC<HeaderProps> = ({ username, theme, onToggleTheme }) => (
+const Header: React.FC<HeaderProps> = ({ username, theme, onToggleTheme, muted, onToggleMuted }) => (
     <header className="site-header">
         <div className="container site-header-inner">
             <Link to="/" className="brand" aria-label="Game Room home">
@@ -32,6 +34,10 @@ const Header: React.FC<HeaderProps> = ({ username, theme, onToggleTheme }) => (
                     <User />
                     <span>{username || 'Guest'}</span>
                 </Link>
+                <button type="button" className="icon-btn" onClick={onToggleMuted} aria-pressed={muted}
+                    aria-label={muted ? 'Turn sound on' : 'Mute sound'} title={muted ? 'Sound off (M)' : 'Sound on (M)'}>
+                    {muted ? <VolumeOff /> : <Volume />}
+                </button>
                 <button type="button" className="icon-btn theme-toggle" onClick={onToggleTheme}
                     aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}>
                     {theme === 'dark' ? <Sun /> : <Moon />}

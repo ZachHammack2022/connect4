@@ -79,7 +79,18 @@ const Connect4Board: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer,
                                     data-column={columnIndex}
                                     style={{ '--drop-rows': rowIndex + 2 } as React.CSSProperties}
                                     onClick={() => onMove(columnIndex)}
-                                    onKeyDown={(event) => activateOnKey(event, () => onMove(columnIndex))}
+                                    onKeyDown={(event) => {
+                                        // ← → move between columns (along the top row).
+                                        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                                            event.preventDefault();
+                                            const next = (columnIndex + (event.key === 'ArrowLeft' ? cols - 1 : 1)) % cols;
+                                            const target = event.currentTarget.closest('.c4-board')
+                                                ?.querySelector<HTMLElement>(`[data-row="0"][data-column="${next}"]`);
+                                            target?.focus();
+                                            return;
+                                        }
+                                        activateOnKey(event, () => onMove(columnIndex));
+                                    }}
                                     onMouseEnter={() => setHoveredColumn(columnIndex)}
                                     onFocus={() => setHoveredColumn(columnIndex)}
                                     aria-label={`Column ${columnIndex + 1}, row ${rowIndex + 1}: ${content}${winning ? ', winning disc' : ''}`}

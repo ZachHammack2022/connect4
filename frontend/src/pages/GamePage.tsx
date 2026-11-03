@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SeatCard, { Token } from '../components/SeatCard';
 import Leaderboard from '../components/Leaderboard';
 import NameForm from '../components/NameForm';
 import Toast from '../components/Toast';
-import { ArrowLeft, Bulb, Refresh, Undo } from '../components/Icons';
+import { ArrowLeft, Bulb, Keyboard, Refresh, Undo } from '../components/Icons';
+import ShortcutsPopover from '../components/ShortcutsPopover';
+import { sounds } from '../sound';
 import MoveList from '../components/MoveList';
 import Connect4Board from '../components/boards/Connect4Board';
 import TicTacToeBoard from '../components/boards/TicTacToeBoard';
@@ -28,11 +30,13 @@ interface GamePageProps {
     game: AvailableGame;
     username: string;
     setUsername: (name: string) => void;
+    muted: boolean;
+    onToggleMuted: () => void;
 }
 
 const modeOf = (state: GameState, side: Side) => (side === 'X' ? state.mode1 : state.mode2);
 
-const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
+const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername, muted, onToggleMuted }) => {
     const leaderboard = useLeaderboard(game.id);
     const session = useGameSession(game, username, leaderboard.refresh);
     const { state, busy, currentMode } = session;
@@ -96,22 +100,60 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
         );
     };
 
-    // Ctrl/Cmd+Z takes back a move, H asks for a hint (but not while typing in a field).
-    const { undo, requestHint } = session;
+    // Restart asks first if a game is under way.
+    const restart = () => {
+        if (state && !state.done && (state.history?.length ?? 0) > 0
+            && !window.confirm('Restart? The current game will be lost.')) return;
+        session.reset();
+    };
+
+    const [showShortcuts, setShowShortcuts] = useState(false);
+
+    // Keyboard shortcuts (ignored while typing in a field). Kept in a ref so
+    // the listener always sees the latest state without re-subscribing.
+    const keyHandler = useRef<(event: KeyboardEvent) => void>(() => {});
+    keyHandler.current = (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+        const key = event.key.toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key === 'z') {
+            event.preventDefault();
+            session.undo();
+            return;
+        }
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (key === 'h') session.requestHint();
+        else if (key === 'r') restart();
+        else if (key === 'm') onToggleMuted();
+        else if (key === '?') setShowShortcuts((open) => !open);
+        else if (key === 'escape') setShowShortcuts(false);
+        else if (game.keyMoves && key in game.keyMoves) session.move(game.keyMoves[key]);
+    };
     useEffect(() => {
-        const onKey = (event: KeyboardEvent) => {
-            const target = event.target as HTMLElement | null;
-            if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-            if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
-                event.preventDefault();
-                undo();
-            } else if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === 'h') {
-                requestHint();
-            }
-        };
+        const onKey = (event: KeyboardEvent) => keyHandler.current(event);
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [undo, requestHint]);
+    }, []);
+
+    // Sounds: a click for each new piece, and a jingle when the game ends.
+    const heard = useRef<{ moves: number; done: boolean } | null>(null);
+    useEffect(() => {
+        if (!state) return;
+        const moves = state.history?.length ?? 0;
+        const previous = heard.current;
+        heard.current = { moves, done: state.done };
+        // Stay quiet on the first load, and when moves are taken back.
+        if (!previous || muted || moves < previous.moves) return;
+        if (moves > previous.moves) {
+            const last = state.history[moves - 1];
+            sounds.place(last.player);
+        }
+        if (state.done && !previous.done) {
+            const tune = !state.winner ? sounds.draw
+                : humanSide && state.winner !== humanSide ? sounds.loss : sounds.win;
+            window.setTimeout(tune, 180);
+        }
+    }, [state, muted, humanSide]);
 
     const pageStyle = {
         '--x-color': game.sideColors.X,
@@ -196,9 +238,17 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                             title="Undo (Ctrl+Z)" aria-keyshortcuts="Control+Z Meta+Z">
                             <Undo /> Undo
                         </button>
-                        <button type="button" className="btn btn-outline btn-sm" onClick={session.reset} disabled={!state || busy}>
+                        <button type="button" className="btn btn-outline btn-sm" onClick={restart} disabled={!state || busy}
+                            title="Restart (R)" aria-keyshortcuts="R">
                             <Refresh /> Restart
                         </button>
+                        <div className="shortcuts-anchor">
+                            <button type="button" className="icon-btn shortcuts-btn" onClick={() => setShowShortcuts((open) => !open)}
+                                aria-label="Keyboard shortcuts" aria-expanded={showShortcuts} title="Keyboard shortcuts (?)">
+                                <Keyboard />
+                            </button>
+                            {showShortcuts && <ShortcutsPopover game={game} onClose={() => setShowShortcuts(false)} />}
+                        </div>
                     </div>
                 </div>
             </section>

@@ -32,6 +32,9 @@ export interface AvailableGame {
     // Move list notation: squares are named file letter + rank; Connect 4
     // counts ranks from the bottom, the others from the top.
     rankFromBottom?: boolean;
+    // Number-key shortcuts: maps a key ('1'-'9') to a move.
+    keyMoves?: Record<string, number>;
+    keyMovesHelp?: string;
     // Pieces each side has on the board, for games scored by count.
     score?: (board: number[]) => Record<Side, number>;
 }
@@ -94,6 +97,8 @@ export const GAMES: GameInfo[] = [
         difficultyModes: ['minimax', 'mcts'],
         sideLabels: { X: 'Red', O: 'Yellow' },
         rankFromBottom: true,
+        keyMoves: { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6 },
+        keyMovesHelp: '1–7 drop a disc in that column; ← → and Enter work too',
         applyMove: (board, column, cols, piece) => {
             // Discs fall to the lowest empty cell in the column.
             for (let index = board.length - cols + column; index >= 0; index -= cols) {
@@ -117,6 +122,9 @@ export const GAMES: GameInfo[] = [
         ],
         difficultyModes: ['minimax'],
         sideLabels: { X: 'X', O: 'O' },
+        // Laid out like a numeric keypad: 7 8 9 is the top row.
+        keyMoves: { 7: 0, 8: 1, 9: 2, 4: 3, 5: 4, 6: 5, 1: 6, 2: 7, 3: 8 },
+        keyMovesHelp: '1–9 play a square, laid out like a number pad (7 is top left)',
         applyMove: (board, cell, _cols, piece) => (board[cell] === 0 ? place(board, [cell], piece) : null),
     },
     {
