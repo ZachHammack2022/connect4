@@ -5,7 +5,7 @@ class HumanPlayer(Player):
         self.NUM_MOVES = 7
         self.NUM_ROWS = 6
         
-    async def make_move(self, obs):
+    async def make_move(self, obs, legal_moves=None):
         valid_move = False
         while not valid_move:
             try:

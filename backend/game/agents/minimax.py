@@ -113,7 +113,7 @@ class MinimaxPlayer(AIPlayer):
                     break
         return value
 
-    async def make_move(self, obs):
+    async def make_move(self, obs, legal_moves=None):
         # The search is CPU-bound; run it in a thread so other players'
         # requests keep being served while the AI thinks.
         return await asyncio.to_thread(self.best_move, obs)

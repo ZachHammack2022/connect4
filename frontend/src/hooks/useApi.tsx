@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Difficulty, GameState, LeaderboardEntry } from '../interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry, Outcome } from '../interfaces/interfaces';
 
 // Extracts a readable message from an API error (FastAPI returns `{ detail }`).
 export const getErrorMessage = (error: unknown): string => {
@@ -17,20 +17,20 @@ export const isNotFound = (error: unknown): boolean =>
 
 // ---- leaderboard ---------------------------------------------------------
 
-export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
-    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/');
+export const fetchLeaderboard = async (gameType: string): Promise<LeaderboardEntry[]> => {
+    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/', { params: { game_type: gameType } });
     return response.data;
 };
 
-export const submitGameResult = async (username: string, won: boolean): Promise<LeaderboardEntry[]> => {
-    await axios.post('/submit_game/', { username, won });
-    return fetchLeaderboard();
+export const submitGameResult = async (username: string, gameType: string, outcome: Outcome): Promise<LeaderboardEntry[]> => {
+    await axios.post('/submit_game/', { username, game_type: gameType, outcome });
+    return fetchLeaderboard(gameType);
 };
 
 // ---- games ---------------------------------------------------------------
 
-export const createGame = async (): Promise<GameState> => {
-    const response = await axios.post<GameState>('/games');
+export const createGame = async (gameType: string): Promise<GameState> => {
+    const response = await axios.post<GameState>('/games', { game_type: gameType });
     return response.data;
 };
 
@@ -39,8 +39,8 @@ export const fetchGameState = async (gameId: string): Promise<GameState> => {
     return response.data;
 };
 
-export const makeMove = async (gameId: string, column: number): Promise<GameState> => {
-    const response = await axios.post<GameState>(`/games/${gameId}/move`, { column });
+export const makeMove = async (gameId: string, move: number): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/move`, { move });
     return response.data;
 };
 

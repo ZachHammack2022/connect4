@@ -2,6 +2,8 @@ import unittest
 from backend.game.game import Connect4Env
 from backend.game.agents.minimax import MinimaxPlayer
 from backend.game.agents.mcts import MCTSPlayer
+from backend.game.tictactoe import TicTacToeEnv
+from backend.game.registry import game_from_dict
 
 class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
     
@@ -153,6 +155,70 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sorted(env.winning_cells), [[5, 0], [5, 1], [5, 2], [5, 3]])
         env.reset()
         self.assertEqual(env.winning_cells, [])
+
+
+
+class TestTicTacToe(unittest.IsolatedAsyncioTestCase):
+    def play(self, moves):
+        env = TicTacToeEnv()
+        for move in moves:
+            env.step(move)
+        return env
+
+    def test_row_column_and_diagonal_wins(self):
+        for moves, cells in [
+            ([0, 3, 1, 4, 2], [[0, 0], [0, 1], [0, 2]]),
+            ([1, 0, 4, 2, 7], [[0, 1], [1, 1], [2, 1]]),
+            ([2, 0, 4, 1, 6], [[0, 2], [1, 1], [2, 0]]),
+        ]:
+            env = self.play(moves)
+            self.assertEqual((env.winner, env.terminated), ('X', True))
+            self.assertEqual(sorted(env.winning_cells), sorted(cells))
+
+    def test_draw(self):
+        env = self.play([0, 1, 2, 4, 3, 5, 7, 6, 8])
+        self.assertEqual((env.winner, env.terminated), (None, True))
+
+    def test_invalid_moves(self):
+        env = self.play([4])
+        self.assertFalse(env._is_valid_action(4))
+        self.assertFalse(env._is_valid_action(9))
+        self.assertFalse(env._is_valid_action(-1))
+
+    async def test_perfect_minimax_never_loses(self):
+        for _ in range(30):
+            env = TicTacToeEnv('random', 'minimax')
+            await env.set_mode(2, 'minimax', 'hard')
+            await env.run_ai_turns()
+            self.assertNotEqual(env.winner, 'X')
+        # Two perfect players always draw. Set O first: setting X (to move)
+        # to an AI starts play, and both sides must be on hard by then.
+        env = TicTacToeEnv()
+        await env.set_mode(2, 'minimax', 'hard')
+        await env.set_mode(1, 'minimax', 'hard')
+        self.assertTrue(env.terminated)
+        self.assertIsNone(env.winner)
+
+    async def test_minimax_takes_win_and_blocks(self):
+        from backend.game.agents.tictactoe_minimax import TicTacToeMinimaxPlayer
+        player = TicTacToeMinimaxPlayer('hard')
+        env = self.play([0, 3, 1, 4])           # X to move, wins at 2
+        self.assertEqual(await player.make_move(env._get_obs()), 2)
+        env = self.play([0, 4, 1])              # O to move, must block 2
+        self.assertEqual(await player.make_move(env._get_obs()), 2)
+
+    async def test_save_and_load(self):
+        env = TicTacToeEnv()
+        await env.set_mode(2, 'minimax', 'easy')
+        env.step(4)
+        loaded = game_from_dict(env.to_dict())
+        self.assertIsInstance(loaded, TicTacToeEnv)
+        self.assertEqual(loaded.to_dict(), env.to_dict())
+
+    def test_old_saved_games_load_as_connect4(self):
+        data = Connect4Env().to_dict()
+        del data['game_type']
+        self.assertIsInstance(game_from_dict(data), Connect4Env)
 
 
 if __name__ == '__main__':

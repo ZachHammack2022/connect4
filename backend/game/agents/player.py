@@ -14,7 +14,7 @@ class Player:
                 raise ValueError(f"Invalid difficulty: {difficulty}")
         self.difficulty = difficulty if self.supports_difficulty else None
 
-    async def make_move(self, obs):
+    async def make_move(self, obs, legal_moves=None):
         raise NotImplementedError
 
 

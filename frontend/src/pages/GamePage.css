@@ -1,0 +1,53 @@
+/* Disc size scales down on narrow screens: 7 discs plus padding fit the viewport. */
+.game-layout {
+    --cell: min(56px, calc((100vw - 64px) / 7));
+    --gap: calc(var(--cell) * 0.12);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.board-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    margin-bottom: 8px;
+}
+
+.mode-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 110px;
+}
+
+.difficulty-hidden { visibility: hidden; }
+
+.player-label {
+    font-weight: bold !important;
+}
+.connect4-side-X { color: #ef4444; }
+.connect4-side-O { color: #eab308; }
+.tictactoe-side-X { color: #38bdf8; }
+.tictactoe-side-O { color: #f472b6; }
+
+
+/* Phones: board on top, the two player panels side by side underneath. */
+@media (max-width: 700px) {
+    .board-column { order: 0; width: 100%; }
+    .mode-group-1 { order: 1; }
+    .mode-group-2 { order: 2; }
+    .game-layout { padding: 0 12px; }
+    .mode-group { min-width: 0; flex: 1 1 40%; max-width: 200px; }
+    .difficulty-hidden { display: none; }
+}
