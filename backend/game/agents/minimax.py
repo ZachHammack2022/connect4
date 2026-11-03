@@ -1,3 +1,4 @@
+import asyncio
 from backend.game.agents.player import AIPlayer
 from backend.game.connect4_logic import check_positive_horizontal, check_negative_horizontal, check_vertical, check_horizontal
 
@@ -100,6 +101,11 @@ class MinimaxPlayer(AIPlayer):
         return value
 
     async def make_move(self, obs):
+        # The search is CPU-bound; run it in a thread so other players'
+        # requests keep being served while the AI thinks.
+        return await asyncio.to_thread(self.best_move, obs)
+
+    def best_move(self, obs):
         board = self.obs_to_board(obs)
 
         # X always moves first, so equal piece counts means it is X's turn.

@@ -6,9 +6,9 @@ import GameBoard from './components/GameBoard'; // Your existing GameBoard compo
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import "./App.css"
-import {LeaderboardEntry, MoveSuccessResponse } from './interfaces/interfaces';
-import { getErrorMessage } from './hooks/useApi';
-import { useFetchLeaderboard,useChangeMode,useFetchGameState,useHandleColumnClick,useResetGame,useSubmitGameResult } from './hooks/useApi';
+import { GameState, LeaderboardEntry } from './interfaces/interfaces';
+import * as api from './hooks/useApi';
+import { getErrorMessage, isNotFound } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -18,26 +18,33 @@ import { ColorModeContext, createAppTheme } from './components/ThemeContext';
 const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 axios.defaults.baseURL = baseURL;
 
+// Each browser tab keeps its own game; sessionStorage survives a refresh.
+const GAME_ID_KEY = 'connect4GameId';
+const loadGameId = (): string | null => {
+    try { return sessionStorage.getItem(GAME_ID_KEY); } catch { return null; }
+};
+const saveGameId = (gameId: string) => {
+    try { sessionStorage.setItem(GAME_ID_KEY, gameId); } catch { /* storage unavailable */ }
+};
+
 function App() {
     const [username, setUsername] = useState('');
     const [board, setBoard] = useState<number[][]>([]);
     const [currentPlayer, setCurrentPlayer] = useState<string>('X');
     const [gameOver, setGameOver] = useState(false);
     const [winner, setWinner] = useState<string | null>(null);
-    const [mode1, setMode1] = useState<string>("human") 
-    const [mode2, setMode2] = useState<string>("human") 
+    const [mode1, setMode1] = useState<string>("human")
+    const [mode2, setMode2] = useState<string>("human")
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const { fetchLeaderboard } = useFetchLeaderboard();
-    const { submitGameResult } = useSubmitGameResult(username, fetchLeaderboard);
-    const { fetchGameState } = useFetchGameState();
-    const { handleChangeMode } = useChangeMode();
-    const { handleColumnClick } = useHandleColumnClick();
-    const { resetGame } = useResetGame();
     const [mode, setMode] = useState<'light' | 'dark'>('dark');
+    const gameIdRef = useRef<string | null>(null);
     // Tracks whether the current game has already finished, so a result is
     // only submitted once (e.g. not again when switching modes after the game).
     const gameOverRef = useRef(false);
+    // The username is read when a game ends, which may be inside an older closure.
+    const usernameRef = useRef('');
+    usernameRef.current = username;
 
     const colorMode = {
       toggleColorMode: () => {
@@ -46,31 +53,69 @@ function App() {
     };
 
     const theme = createAppTheme(mode);
-  
 
     const handleSubmitGameResult = async (won:boolean) => {
+        if (!usernameRef.current) return;
         try {
-            const leaderboard = await submitGameResult(won);
-            if (leaderboard) {
-              setLeaderboardData(leaderboard);
-            }
+            setLeaderboardData(await api.submitGameResult(usernameRef.current, won));
         } catch (error) {
-            console.log(`Error while submitting game result: ${error}`);
+            setError(`Error while submitting game result: ${getErrorMessage(error)}`);
         }
     };
 
-    const handleModeChange = async (newMode:string,player:number) => {
+    const updateGame = (state: GameState) => {
+      gameIdRef.current = state.game_id;
+      saveGameId(state.game_id);
+      updateGameBoard(state.board);
+      setCurrentPlayer(state.current_player);
+      setGameOver(state.done);
+      setWinner(state.winner || null);
+      setMode1(state.mode1);
+      setMode2(state.mode2);
+
+      const justFinished = state.done && !gameOverRef.current;
+      gameOverRef.current = state.done;
+      if (!justFinished || !state.winner) {
+          return;
+      }
+      // Only human-vs-AI games count towards the leaderboard, scored from the human's side.
+      const human1 = state.mode1 === 'human';
+      const human2 = state.mode2 === 'human';
+      if (human1 !== human2) {
+          const humanSymbol = human1 ? 'X' : 'O';
+          handleSubmitGameResult(state.winner === humanSymbol);
+      }
+    }
+
+    const startNewGame = async () => {
+        gameOverRef.current = false;
+        updateGame(await api.createGame());
+    };
+
+    // Runs a request against the current game. If the server no longer knows
+    // the game (it expired or the server restarted), start a fresh one.
+    const withGame = async (action: string, request: (gameId: string) => Promise<GameState>) => {
         try {
-            const response = await handleChangeMode(newMode,player);
-            const newMode1 = player === 1 ? newMode : mode1;
-            const newMode2 = player === 2 ? newMode : mode2;
-            setMode1(newMode1);
-            setMode2(newMode2);
-            updateGame(response, newMode1, newMode2)
+            if (!gameIdRef.current) {
+                await startNewGame();
+            }
+            updateGame(await request(gameIdRef.current as string));
         } catch (error) {
-            setError(`Error while changing mode for player ${player}: ${getErrorMessage(error)}`);
+            if (isNotFound(error)) {
+                try {
+                    await startNewGame();
+                    setError("Your game expired, so a new one was started.");
+                } catch (createError) {
+                    setError(`Error while starting a new game: ${getErrorMessage(createError)}`);
+                }
+            } else {
+                setError(`Error while ${action}: ${getErrorMessage(error)}`);
+            }
         }
     };
+
+    const handleModeChange = (newMode:string, player:number) =>
+        withGame(`changing mode for player ${player}`, (gameId) => api.changeMode(gameId, newMode, player));
 
     const onColumnClick = async (column:number) => {
           if (board.length === 0) {
@@ -83,43 +128,13 @@ function App() {
           if (gameOver) {
               setError("The game is over. Reset the game to play again.");
               return;
-            }  
-      try {
-            const moveResponse = await handleColumnClick(column);
-            updateGame(moveResponse)
-        } catch (error) {
-            setError(`Error while making a move: ${getErrorMessage(error)}`);
-        }
+            }
+          await withGame('making a move', (gameId) => api.makeMove(gameId, column));
     };
 
-    const updateGame = (moveResponse:MoveSuccessResponse, currentMode1 = mode1, currentMode2 = mode2) => {
-      updateGameBoard(moveResponse.board);
-      setCurrentPlayer(moveResponse.current_player);
-      setGameOver(moveResponse.done);
-      setWinner(moveResponse.winner || null);
-
-      const justFinished = moveResponse.done && !gameOverRef.current;
-      gameOverRef.current = moveResponse.done;
-      if (!justFinished || !moveResponse.winner) {
-          return;
-      }
-      // Only human-vs-AI games count towards the leaderboard, scored from the human's side.
-      const human1 = currentMode1 === 'human';
-      const human2 = currentMode2 === 'human';
-      if (human1 !== human2) {
-          const humanSymbol = human1 ? 'X' : 'O';
-          handleSubmitGameResult(moveResponse.winner === humanSymbol);
-      }
-    }
-
     const onResetGame = async () => {
-        try {
-            gameOverRef.current = false;
-            const resetResponse = await resetGame();
-            updateGame(resetResponse);
-        } catch (error) {
-            setError(`Error while resetting game: ${getErrorMessage(error)}`);
-        }
+        gameOverRef.current = false;
+        await withGame('resetting the game', api.resetGame);
     };
 
     const handleCloseErrorPopup = () => {
@@ -142,23 +157,32 @@ function App() {
   useEffect(() => {
     const initLeaderboard = async () => {
         try {
-            const leaderboardData = await fetchLeaderboard();
-            setLeaderboardData(leaderboardData);
+            setLeaderboardData(await api.fetchLeaderboard());
         } catch (error) {
             setError("Error while fetching leaderboard");
         }
     };
 
     const initGameState = async () => {
+        const savedGameId = loadGameId();
+        if (savedGameId) {
+            try {
+                const state = await api.fetchGameState(savedGameId);
+                gameOverRef.current = state.done;  // resuming: don't re-submit a finished game
+                updateGame(state);
+                return;
+            } catch (error) {
+                if (!isNotFound(error)) {
+                    setError(`Error while fetching game state: ${getErrorMessage(error)}`);
+                    return;
+                }
+                // Saved game is gone; fall through and start a new one.
+            }
+        }
         try {
-            const data = await fetchGameState();
-            updateGameBoard(data.board);
-            setCurrentPlayer(data.current_player);
-            setGameOver(data.done);
-            setWinner(data.winner || null);
-            gameOverRef.current = data.done;
+            await startNewGame();
         } catch (error) {
-            setError("Error while fetching initial game state.");
+            setError(`Error while starting a new game: ${getErrorMessage(error)}`);
         }
     };
 

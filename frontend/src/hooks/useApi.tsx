@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LeaderboardEntry,MoveSuccessResponse } from '../interfaces/interfaces';
+import { GameState, LeaderboardEntry } from '../interfaces/interfaces';
 
 // Extracts a readable message from an API error (FastAPI returns `{ detail }`).
 export const getErrorMessage = (error: unknown): string => {
@@ -12,75 +12,44 @@ export const getErrorMessage = (error: unknown): string => {
     return error instanceof Error ? error.message : String(error);
 };
 
+export const isNotFound = (error: unknown): boolean =>
+    axios.isAxiosError(error) && error.response?.status === 404;
 
-export const useFetchLeaderboard = () => {
-    const fetchLeaderboard = async () => {
-        try {
-            const response = await axios.get('/leaderboard/');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
+// ---- leaderboard ---------------------------------------------------------
 
-    return { fetchLeaderboard };
+export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/');
+    return response.data;
 };
 
-// useSubmitGameResult hook
-export const useSubmitGameResult = (username: string, fetchLeaderboard: () => Promise<LeaderboardEntry[]>) => {
-    const submitGameResult = async (won: boolean) => {
-        if (!username) return;
-        try {
-            await axios.post('/submit_game/', { username, won });
-            return await fetchLeaderboard();
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { submitGameResult };
+export const submitGameResult = async (username: string, won: boolean): Promise<LeaderboardEntry[]> => {
+    await axios.post('/submit_game/', { username, won });
+    return fetchLeaderboard();
 };
 
-// useFetchGameState hook
-export const useFetchGameState = () => {
-    const fetchGameState = async () => {
-        try {
-            const response = await axios.get('/state');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { fetchGameState };
+// ---- games ---------------------------------------------------------------
+
+export const createGame = async (): Promise<GameState> => {
+    const response = await axios.post<GameState>('/games');
+    return response.data;
 };
 
-// useChangeMode hook
-export const useChangeMode = () => {
-    const handleChangeMode = async (newMode: string,player:number) => {
-        const response = await axios.post('/set_mode', { mode: newMode,player:player });
-        return response.data;
-    };
-    return { handleChangeMode };
+export const fetchGameState = async (gameId: string): Promise<GameState> => {
+    const response = await axios.get<GameState>(`/games/${gameId}`);
+    return response.data;
 };
 
-// useHandleColumnClick hook
-export const useHandleColumnClick = () => {
-    const handleColumnClick = async (column: number) => {
-        const response = await axios.post<MoveSuccessResponse>('/move', { column });
-        return response.data;
-    };
-    return { handleColumnClick };
+export const makeMove = async (gameId: string, column: number): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/move`, { column });
+    return response.data;
 };
 
+export const changeMode = async (gameId: string, mode: string, player: number): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/mode`, { mode, player });
+    return response.data;
+};
 
-// useResetGame hook
-export const useResetGame = () => {
-    const resetGame = async () => {
-        try {
-            const response = await axios.post('/reset');
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    };
-    return { resetGame };
+export const resetGame = async (gameId: string): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/reset`);
+    return response.data;
 };
