@@ -44,3 +44,6 @@ export const Undo = (p: IconProps) => <Icon {...p}><path d="M9 14 4 9l5-5" /><pa
 export const Bulb = (p: IconProps) => (
     <Icon {...p}><path d="M9 18h6M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z" /></Icon>
 );
+export const Flame = (p: IconProps) => (
+    <Icon {...p}><path d="M12 22c4 0 7-2.7 7-6.8 0-3.4-2.3-5.9-4.3-8.2-.5 1.8-1.6 3-2.9 3.6.3-3.3-1.2-6.3-3.8-8.6.1 3-1.8 5.3-3.4 7.4A9.4 9.4 0 0 0 5 15.2C5 19.3 8 22 12 22z" /></Icon>
+);

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Difficulty, GameState, LeaderboardEntry, Outcome } from '../interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry, LeaderboardFilter, OpponentSummary, Outcome } from '../interfaces/interfaces';
 
 // Extracts a readable message from an API error (FastAPI returns `{ detail }`).
 export const getErrorMessage = (error: unknown): string => {
@@ -17,14 +17,25 @@ export const isNotFound = (error: unknown): boolean =>
 
 // ---- leaderboard ---------------------------------------------------------
 
-export const fetchLeaderboard = async (gameType: string): Promise<LeaderboardEntry[]> => {
-    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/', { params: { game_type: gameType } });
+export const fetchLeaderboard = async (gameType: string, filter?: LeaderboardFilter | null): Promise<LeaderboardEntry[]> => {
+    const params: Record<string, string> = { game_type: gameType };
+    if (filter) {
+        params.opponent = filter.opponent;
+        if (filter.difficulty) params.difficulty = filter.difficulty;
+    }
+    const response = await axios.get<LeaderboardEntry[]>('/leaderboard/', { params });
     return response.data;
 };
 
-export const submitGameResult = async (username: string, gameType: string, outcome: Outcome): Promise<LeaderboardEntry[]> => {
-    await axios.post('/submit_game/', { username, game_type: gameType, outcome });
-    return fetchLeaderboard(gameType);
+export const fetchOpponents = async (gameType: string): Promise<OpponentSummary[]> => {
+    const response = await axios.get<OpponentSummary[]>('/leaderboard/opponents', { params: { game_type: gameType } });
+    return response.data;
+};
+
+export const submitGameResult = async (
+    username: string, gameType: string, outcome: Outcome, opponent: string, difficulty: Difficulty | null,
+): Promise<void> => {
+    await axios.post('/submit_game/', { username, game_type: gameType, outcome, opponent, difficulty });
 };
 
 // ---- games ---------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as api from './useApi';
 import { getErrorMessage, isNotFound } from './useApi';
-import { Difficulty, GameState, LeaderboardEntry, Outcome } from '../interfaces/interfaces';
+import { Difficulty, GameState, Outcome } from '../interfaces/interfaces';
 import { AvailableGame } from '../games';
 
 // Each browser tab keeps one game per game type; sessionStorage survives a refresh.
@@ -13,16 +13,14 @@ const saveGameId = (gameType: string, gameId: string) => {
     try { sessionStorage.setItem(storageKey(gameType), gameId); } catch { /* storage unavailable */ }
 };
 
-/** Everything a game page needs: the game state from the server, actions to
- *  play it, and the game's leaderboard. Results of human-vs-AI games are
- *  submitted to the leaderboard once, from the human's side. */
-export const useGameSession = (game: AvailableGame, username: string) => {
+/** Everything a game page needs: the game state from the server and actions to
+ *  play it. Results of human-vs-AI games are submitted to the leaderboard once,
+ *  from the human's side; `onResultRecorded` runs after each one. */
+export const useGameSession = (game: AvailableGame, username: string, onResultRecorded?: () => void) => {
     const gameType = game.id;
     const [state, setState] = useState<GameState | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-    const [leaderboardLoading, setLeaderboardLoading] = useState(true);
     const clearError = useCallback(() => setError(null), []);
 
     const gameIdRef = useRef<string | null>(null);
@@ -36,10 +34,14 @@ export const useGameSession = (game: AvailableGame, username: string) => {
     // Each side remembers its last difficulty so switching AI keeps it.
     const lastDifficulty = useRef<Record<number, Difficulty>>({ 1: 'medium', 2: 'medium' });
 
-    const submitResult = async (outcome: Outcome) => {
+    const onRecordedRef = useRef(onResultRecorded);
+    onRecordedRef.current = onResultRecorded;
+
+    const submitResult = async (outcome: Outcome, opponent: string, difficulty: Difficulty | null) => {
         if (!usernameRef.current) return;
         try {
-            setLeaderboard(await api.submitGameResult(usernameRef.current, gameType, outcome));
+            await api.submitGameResult(usernameRef.current, gameType, outcome, opponent, difficulty);
+            onRecordedRef.current?.();
         } catch (err) {
             setError(`Error while submitting game result: ${getErrorMessage(err)}`);
         }
@@ -62,7 +64,8 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         // Games where a human took moves back are practice: not recorded.
         if (next.assisted) return;
         const humanSide = human1 ? 'X' : 'O';
-        submitResult(!next.winner ? 'draw' : next.winner === humanSide ? 'win' : 'loss');
+        const outcome = !next.winner ? 'draw' : next.winner === humanSide ? 'win' : 'loss';
+        submitResult(outcome, human1 ? next.mode2 : next.mode1, human1 ? next.difficulty2 : next.difficulty1);
     };
 
     const startNewGame = async () => {
@@ -175,19 +178,12 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         await withGame('resetting the game', api.resetGame);
     };
 
-    // Load (or start) this tab's game and the leaderboard when the game type changes.
+    // Load (or start) this tab's game when the game type changes.
     useEffect(() => {
         let cancelled = false;
         gameIdRef.current = null;
         gameOverRef.current = false;
         setState(null);
-        setLeaderboard([]);
-        setLeaderboardLoading(true);
-
-        api.fetchLeaderboard(gameType)
-            .then((rows) => { if (!cancelled) setLeaderboard(rows); })
-            .catch(() => { if (!cancelled) setError('Couldn’t load the leaderboard.'); })
-            .finally(() => { if (!cancelled) setLeaderboardLoading(false); });
 
         const init = async () => {
             const savedId = loadGameId(gameType);
@@ -221,7 +217,7 @@ export const useGameSession = (game: AvailableGame, username: string) => {
     }, [gameType]);
 
     return {
-        state, busy, error, clearError, leaderboard, leaderboardLoading,
+        state, busy, error, clearError,
         currentMode, humanToMove, move, changeMode, changeDifficulty, reset, undo, canUndo, requestHint, hintCell, hinting,
     };
 };

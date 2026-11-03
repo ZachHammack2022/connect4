@@ -11,6 +11,7 @@ import TicTacToeBoard from '../components/boards/TicTacToeBoard';
 import ReversiBoard from '../components/boards/ReversiBoard';
 import { BoardProps } from '../components/boards/types';
 import { useGameSession } from '../hooks/useGameSession';
+import { useLeaderboard } from '../hooks/useLeaderboard';
 import { AvailableGame, Side } from '../games';
 import { GameState } from '../interfaces/interfaces';
 import './GamePage.css';
@@ -30,7 +31,8 @@ interface GamePageProps {
 const modeOf = (state: GameState, side: Side) => (side === 'X' ? state.mode1 : state.mode2);
 
 const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
-    const session = useGameSession(game, username);
+    const leaderboard = useLeaderboard(game.id);
+    const session = useGameSession(game, username, leaderboard.refresh);
     const { state, busy, currentMode } = session;
     const Board = BOARDS[game.id];
 
@@ -200,10 +202,14 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
             </section>
 
             <Leaderboard
-                gameName={game.name}
-                data={session.leaderboard}
+                game={game}
+                data={leaderboard.rows}
                 username={username}
-                loading={session.leaderboardLoading}
+                loading={leaderboard.loading}
+                failed={leaderboard.error}
+                opponents={leaderboard.opponents}
+                filter={leaderboard.filter}
+                onFilterChange={leaderboard.setFilter}
                 footer={username ? (
                     <span>Results are saved as <strong>{username}</strong> when you play the AI.</span>
                 ) : (

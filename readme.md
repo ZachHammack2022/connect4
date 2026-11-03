@@ -20,7 +20,7 @@ A full-stack web app for classic two-player board games. Play against a friend o
 - **Light and dark themes**: Follows the system setting until you pick one in the header.
 - **Undo, hints and move history**: Take back moves (Ctrl/Cmd+Z), ask for a hint (H) and follow the game in a move list. Games with undos or hints are practice and don't count.
 - **Opponent choice**: Switch either side between a human and an AI at any time, with a difficulty setting for the stronger AIs.
-- **Leaderboards**: One per game. Human-vs-AI games count wins, losses and draws, from the human's side.
+- **Leaderboards**: One per game, filterable by AI opponent and difficulty, with win streaks. Human-vs-AI games count wins, losses and draws, from the human's side.
 - **Per-user games**: Every browser tab plays its own game of each type. Refreshing the page resumes it. Games are stored in Postgres, so they survive backend restarts; games untouched for a day are cleaned up.
 
 ## Adding a game
@@ -76,8 +76,9 @@ To train the RL agents in `rl_agent/`, install the extra training dependencies w
 | POST | `/games/{game_id}/undo` | Take back your last move (and the AI's reply). The state's `history` lists moves played; `assisted` games don't count on the leaderboard |
 | POST | `/games/{game_id}/hint` | The move the strongest AI would play for you (`hint` in the response); marks the game as assisted |
 | POST | `/games/{game_id}/reset` | Restart the game, keeping the chosen players |
-| GET | `/leaderboard/?game_type=...` | A game's leaderboard |
-| POST | `/submit_game/` | `{"username": ..., "game_type": ..., "outcome": "win", "loss" or "draw"}` |
+| GET | `/leaderboard/?game_type=...&opponent=...&difficulty=...` | A game's leaderboard, optionally only games against one AI (and difficulty); rows include `current_streak` and `best_streak` |
+| GET | `/leaderboard/opponents?game_type=...` | The AI opponents and difficulties that have results, for filtering |
+| POST | `/submit_game/` | `{"username": ..., "game_type": ..., "outcome": "win", "loss" or "draw", "opponent": AI mode, "difficulty": ...}` (opponent optional) |
 
 Games are stored in Postgres by default. Set `GAME_STORE=memory` to keep them in the backend's memory instead (no database needed for games, but they end when the backend restarts and only work with a single backend process). If a game is gone, the frontend starts a new one automatically.
 

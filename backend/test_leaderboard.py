@@ -24,6 +24,7 @@ class TestLeaderboard(unittest.TestCase):
         from backend.dependencies import get_database
         self.db = get_database()
         self.db_call(self.db.execute, "DELETE FROM games")
+        self.db_call(self.db.execute, "DELETE FROM game_results")
 
     def tearDown(self):
         self.client.__exit__(None, None, None)
@@ -36,8 +37,42 @@ class TestLeaderboard(unittest.TestCase):
         rows = self.client.get('/leaderboard/', params={'game_type': game_type}).json()
         return {row['username']: (row['wins'], row['losses'], row['draws']) for row in rows}
 
-    def submit(self, username, outcome, game_type='connect4'):
-        return self.client.post('/submit_game/', json={'username': username, 'outcome': outcome, 'game_type': game_type})
+    def submit(self, username, outcome, game_type='connect4', opponent=None, difficulty=None):
+        body = {'username': username, 'outcome': outcome, 'game_type': game_type}
+        if opponent:
+            body.update(opponent=opponent, difficulty=difficulty)
+        return self.client.post('/submit_game/', json=body)
+
+    def rows(self, **params):
+        return {row['username']: row for row in self.client.get('/leaderboard/', params=params).json()}
+
+    def test_win_streaks(self):
+        for outcome in ('win', 'win', 'win', 'loss', 'win', 'draw', 'win', 'win'):
+            self.submit('ann', outcome)
+        row = self.rows(game_type='connect4')['ann']
+        self.assertEqual((row['current_streak'], row['best_streak']), (2, 3))
+
+    def test_filter_by_opponent_and_difficulty(self):
+        self.submit('ann', 'win', opponent='minimax', difficulty='hard')
+        self.submit('ann', 'loss', opponent='minimax', difficulty='easy')
+        self.submit('bob', 'win', opponent='random')
+        self.submit('cat', 'win')  # an older client: overall table only
+        hard = self.rows(game_type='connect4', opponent='minimax', difficulty='hard')
+        self.assertEqual(list(hard), ['ann'])
+        self.assertEqual((hard['ann']['wins'], hard['ann']['losses']), (1, 0))
+        self.assertEqual(list(self.rows(game_type='connect4', opponent='random')), ['bob'])
+        self.assertEqual(set(self.rows(game_type='connect4')), {'ann', 'bob', 'cat'})
+        opponents = self.client.get('/leaderboard/opponents', params={'game_type': 'connect4'}).json()
+        self.assertEqual([(o['opponent'], o['difficulty'], o['games']) for o in opponents],
+                         [('minimax', 'easy', 1), ('minimax', 'hard', 1), ('random', None, 1)])
+
+    def test_opponent_validation(self):
+        self.assertEqual(self.submit('ann', 'win', opponent='human').status_code, 422)
+        self.assertEqual(self.submit('ann', 'win', 'tictactoe', opponent='mcts', difficulty='hard').status_code, 422)
+        self.assertEqual(self.submit('ann', 'win', opponent='minimax', difficulty='max').status_code, 422)
+        # Random has no difficulty; one sent along is ignored.
+        self.assertEqual(self.submit('ann', 'win', opponent='random', difficulty='hard').status_code, 200)
+        self.assertEqual(list(self.rows(game_type='connect4', opponent='random')), ['ann'])
 
     def test_results_accumulate(self):
         for outcome in ('win', 'win', 'loss', 'draw'):
