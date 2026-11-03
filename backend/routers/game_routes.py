@@ -17,6 +17,9 @@ def game_state(game_id: str, game: Connect4Env):
         "current_player": game.current_player,
         "mode1": game.player1.name,
         "mode2": game.player2.name,
+        "difficulty1": game.player1.difficulty,
+        "difficulty2": game.player2.difficulty,
+        "winning_cells": game.winning_cells,
     }
 
 
@@ -56,7 +59,7 @@ async def reset_game(game_id: str, session: GameSession = Depends(get_game_sessi
 async def set_mode(game_id: str, mode_change_input: ModeChangeInput, session: GameSession = Depends(get_game_session)):
     async with session.lock:
         try:
-            await session.game.set_mode(mode_change_input.player, mode_change_input.mode)
+            await session.game.set_mode(mode_change_input.player, mode_change_input.mode, mode_change_input.difficulty)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         return game_state(game_id, session.game)

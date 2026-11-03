@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ModeButtonGroup from './ModeButtonGroup';
 import UnderGameBar from './UnderGameBar'
 import { LeanModeButtonProps } from './ModeButtonGroup';
+import { Difficulty } from '../interfaces/interfaces';
 import Grid from '@mui/material/Grid';
 import { Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -18,6 +19,10 @@ interface GameBoardProps {
     currentMode1: string;
     buttons2: LeanModeButtonProps[];
     currentMode2: string;
+    difficulty1: Difficulty | null;
+    difficulty2: Difficulty | null;
+    onDifficultyChange: (player: number, difficulty: Difficulty) => void;
+    winningCells: [number, number][];
     resetGame: () => Promise<void>;
 }
 
@@ -31,13 +36,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
     currentMode1,
     buttons2,
     currentMode2,
+    difficulty1,
+    difficulty2,
+    onDifficultyChange,
+    winningCells,
     resetGame
 }) => {
+    const isWinningCell = (row: number, column: number) =>
+        winningCells.some(([r, c]) => r === row && c === column);
     const theme = useTheme();
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
     const border = `1px solid ${theme.palette.mode === "light" ? theme.palette.grey[300] : theme.palette.grey[800]}`
-    const getCellStyle = (columnIndex: number, cell: number): React.CSSProperties => {
-        
+    const getCellStyle = (rowIndex: number, columnIndex: number, cell: number): React.CSSProperties => {
+        const winning = isWinningCell(rowIndex, columnIndex);
+        // Once someone has won, fade every disc that isn't part of the line.
+        const faded = winningCells.length > 0 && !winning && cell !== 0;
+
         let backgroundColor: string;
     
         if (cell === 0) {
@@ -59,8 +73,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            cursor: 'pointer',
-            color: 'black'
+            cursor: gameOver ? 'default' : 'pointer',
+            color: 'black',
+            fontWeight: winning ? 'bold' : 'normal',
+            opacity: faded ? 0.35 : 1,
+            boxShadow: winning ? `inset 0 0 0 4px ${theme.palette.success.main}` : undefined,
+            transition: 'opacity 0.3s, box-shadow 0.3s',
         };
     };
     
@@ -89,7 +107,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             } else {
                 return (
                     <Typography variant="h6" component="p">
-                        {winner ? `Winner: ${winner}` : 'Game Over!'}
+                        {winner ? `Winner: ${winner}` : 'Draw!'}
                     </Typography>
                 );
             }
@@ -100,7 +118,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}/>
+                    <ModeButtonGroup buttons={buttons1} currentMode={currentMode1}
+                        difficulty={difficulty1} onDifficultyChange={(d) => onDifficultyChange(1, d)} />
                 </Grid>
                 <div>
                     <div style={{ paddingRight: '20px',paddingLeft: '20px'  }}>
@@ -116,7 +135,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                                         onKeyDown={(event) => handleKeyDown(event, columnIndex)}
                                         onMouseEnter={() => handleMouseEnter(columnIndex)}
                                         onMouseLeave={handleMouseLeave}
-                                        style={getCellStyle(columnIndex, cell)}
+                                        style={getCellStyle(rowIndex, columnIndex, cell)}
                                         aria-label={`Column ${columnIndex}`}
                                     >
                                         {cell !== 0 && (cell === -1 ? 'X' : 'O')}
@@ -131,7 +150,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     </div>
                 </div>
                 <Grid style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <ModeButtonGroup buttons={buttons2} currentMode={currentMode2}/>
+                    <ModeButtonGroup buttons={buttons2} currentMode={currentMode2}
+                        difficulty={difficulty2} onDifficultyChange={(d) => onDifficultyChange(2, d)} />
                 </Grid>
             </div>
 

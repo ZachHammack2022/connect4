@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { GameState, LeaderboardEntry } from '../interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry } from '../interfaces/interfaces';
 
 // Extracts a readable message from an API error (FastAPI returns `{ detail }`).
 export const getErrorMessage = (error: unknown): string => {
@@ -44,8 +44,8 @@ export const makeMove = async (gameId: string, column: number): Promise<GameStat
     return response.data;
 };
 
-export const changeMode = async (gameId: string, mode: string, player: number): Promise<GameState> => {
-    const response = await axios.post<GameState>(`/games/${gameId}/mode`, { mode, player });
+export const changeMode = async (gameId: string, mode: string, player: number, difficulty?: Difficulty | null): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/mode`, { mode, player, difficulty: difficulty ?? undefined });
     return response.data;
 };
 

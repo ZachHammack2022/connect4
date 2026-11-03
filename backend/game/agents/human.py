@@ -1,6 +1,6 @@
 from backend.game.agents.player import Player
 class HumanPlayer(Player):
-    def __init__(self):
+    def __init__(self, difficulty=None):
         super().__init__(name="human", display_name="Human")
         self.NUM_MOVES = 7
         self.NUM_ROWS = 6

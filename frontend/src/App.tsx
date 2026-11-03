@@ -6,7 +6,7 @@ import GameBoard from './components/GameBoard'; // Your existing GameBoard compo
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
 import "./App.css"
-import { GameState, LeaderboardEntry } from './interfaces/interfaces';
+import { Difficulty, GameState, LeaderboardEntry } from './interfaces/interfaces';
 import * as api from './hooks/useApi';
 import { getErrorMessage, isNotFound } from './hooks/useApi';
 import ErrorPopup from './components/ErrorPopup';
@@ -35,6 +35,11 @@ function App() {
     const [winner, setWinner] = useState<string | null>(null);
     const [mode1, setMode1] = useState<string>("human")
     const [mode2, setMode2] = useState<string>("human")
+    const [difficulty1, setDifficulty1] = useState<Difficulty | null>(null);
+    const [difficulty2, setDifficulty2] = useState<Difficulty | null>(null);
+    const [winningCells, setWinningCells] = useState<[number, number][]>([]);
+    // Each side remembers its last difficulty so switching AI keeps it.
+    const lastDifficulty = useRef<Record<number, Difficulty>>({ 1: 'medium', 2: 'medium' });
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [mode, setMode] = useState<'light' | 'dark'>('dark');
@@ -72,6 +77,11 @@ function App() {
       setWinner(state.winner || null);
       setMode1(state.mode1);
       setMode2(state.mode2);
+      setDifficulty1(state.difficulty1);
+      setDifficulty2(state.difficulty2);
+      if (state.difficulty1) lastDifficulty.current[1] = state.difficulty1;
+      if (state.difficulty2) lastDifficulty.current[2] = state.difficulty2;
+      setWinningCells(state.winning_cells || []);
 
       const justFinished = state.done && !gameOverRef.current;
       gameOverRef.current = state.done;
@@ -114,8 +124,12 @@ function App() {
         }
     };
 
-    const handleModeChange = (newMode:string, player:number) =>
-        withGame(`changing mode for player ${player}`, (gameId) => api.changeMode(gameId, newMode, player));
+    const handleModeChange = (newMode:string, player:number, difficulty?: Difficulty) =>
+        withGame(`changing mode for player ${player}`, (gameId) =>
+            api.changeMode(gameId, newMode, player, difficulty ?? lastDifficulty.current[player]));
+
+    const handleDifficultyChange = (player: number, difficulty: Difficulty) =>
+        handleModeChange(player === 1 ? mode1 : mode2, player, difficulty);
 
     const onColumnClick = async (column:number) => {
           if (board.length === 0) {
@@ -233,6 +247,10 @@ const buttons2 = [
                             currentMode1={mode1}
                             buttons2={buttons2}
                             currentMode2={mode2}
+                            difficulty1={difficulty1}
+                            difficulty2={difficulty2}
+                            onDifficultyChange={handleDifficultyChange}
+                            winningCells={winningCells}
                             resetGame={onResetGame}
                           />
                         )}

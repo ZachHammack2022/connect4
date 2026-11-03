@@ -37,6 +37,14 @@ class TestGameApi(unittest.TestCase):
         self.assertEqual(state['current_player'], 'X')
         self.assertEqual(sum(cell != 0 for cell in state['board']), 2)
 
+    def test_difficulty_and_winning_cells_in_state(self):
+        game_id = self.new_game()['game_id']
+        state = self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'minimax', 'difficulty': 'easy'}).json()
+        self.assertEqual((state['difficulty1'], state['difficulty2']), (None, 'easy'))
+        self.assertEqual(state['winning_cells'], [])
+        bad = self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'minimax', 'difficulty': 'max'})
+        self.assertEqual(bad.status_code, 422)
+
     def test_invalid_requests(self):
         game_id = self.new_game()['game_id']
         self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'column': -1}).status_code, 422)

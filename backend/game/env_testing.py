@@ -1,6 +1,7 @@
 import unittest
 from backend.game.game import Connect4Env
 from backend.game.agents.minimax import MinimaxPlayer
+from backend.game.agents.mcts import MCTSPlayer
 
 class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
     
@@ -116,6 +117,42 @@ class TestConnect4Env(unittest.IsolatedAsyncioTestCase):
         env = Connect4Env()
         self.assertFalse(env._is_valid_action(-1))
         self.assertFalse(env._is_valid_action(7))
+
+    async def test_mcts_takes_win_and_blocks(self):
+        env = Connect4Env()
+        for move in [0, 3, 0, 3, 1, 3, 6]:  # O to move, O wins in column 3
+            env.step(move)
+        self.assertEqual(await MCTSPlayer('easy').make_move(env._get_obs()), 3)
+        env.reset()
+        for move in [0, 6, 1, 6, 2]:  # O to move, must block column 3
+            env.step(move)
+        self.assertEqual(await MCTSPlayer('easy').make_move(env._get_obs()), 3)
+
+    async def test_mcts_plays_full_games(self):
+        env = Connect4Env('mcts', 'random')
+        await env.set_mode(1, 'mcts', 'easy')
+        for _ in range(5):
+            await env.reset_and_start()
+            self.assertTrue(env.terminated)
+
+    async def test_difficulty(self):
+        env = Connect4Env()
+        await env.set_mode(2, 'minimax', 'hard')
+        self.assertEqual((env.player2.difficulty, env.player2.depth), ('hard', 6))
+        await env.set_mode(2, 'mcts')
+        self.assertEqual(env.player2.difficulty, 'medium')
+        await env.set_mode(2, 'random', 'hard')  # random has no difficulty
+        self.assertIsNone(env.player2.difficulty)
+        with self.assertRaises(ValueError):
+            await env.set_mode(2, 'minimax', 'impossible')
+
+    def test_winning_cells(self):
+        env = Connect4Env()
+        for move in [0, 0, 1, 1, 2, 2, 3]:  # X wins along the bottom row
+            env.step(move)
+        self.assertEqual(sorted(env.winning_cells), [[5, 0], [5, 1], [5, 2], [5, 3]])
+        env.reset()
+        self.assertEqual(env.winning_cells, [])
 
 
 if __name__ == '__main__':

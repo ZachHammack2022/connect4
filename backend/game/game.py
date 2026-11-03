@@ -2,7 +2,7 @@ import gym
 from gym import spaces
 import random
 import asyncio
-from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal
+from backend.game.connect4_logic import check_negative_horizontal, check_positive_horizontal, check_vertical, check_horizontal, find_winning_line
 from backend.game.agents.random import RandomPlayer
 from backend.game.agents.human import HumanPlayer
 from backend.game.agents.mcts import MCTSPlayer
@@ -20,6 +20,7 @@ class Connect4Env(gym.Env):
         self.observation_space = spaces.Box(low=-1, high=1, shape=(42,), dtype=float)
         self.terminated = False
         self.winner = None
+        self.winning_cells = []
         self.player_modes = {
             'human': HumanPlayer,
             'random': RandomPlayer,
@@ -36,17 +37,17 @@ class Connect4Env(gym.Env):
     def seed(self, seed=None):
         random.seed(seed)
     
-    async def set_mode(self, player_number, player_mode):
+    async def set_mode(self, player_number, player_mode, difficulty=None):
         if player_mode not in self.player_modes:
             raise ValueError(f"Invalid player type: {player_mode}")
-
-        player_class = self.player_modes[player_mode]
-        if player_number == 1:
-            self.player1 = player_class()
-        elif player_number == 2:
-            self.player2 = player_class()
-        else:
+        if player_number not in (1, 2):
             raise ValueError("Invalid player number")
+
+        player = self.player_modes[player_mode](difficulty=difficulty)
+        if player_number == 1:
+            self.player1 = player
+        else:
+            self.player2 = player
 
         # If the newly selected player is an AI whose turn it is, let it move.
         await self.run_ai_turns()
@@ -66,6 +67,7 @@ class Connect4Env(gym.Env):
         won = self.check_winner(self.current_player)
         if won:
             self.winner = self.current_player
+            self.winning_cells = find_winning_line(self.board, self.current_player)
             self.terminated = True
             reward = 100
         else:
@@ -121,6 +123,7 @@ class Connect4Env(gym.Env):
         self.current_player = 'X'
         self.terminated = False
         self.winner = None
+        self.winning_cells = []
         return self._get_obs()
 
     def switch_player(self):

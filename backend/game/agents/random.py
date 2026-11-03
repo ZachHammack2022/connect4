@@ -8,7 +8,9 @@ def valid_moves(obs, num_cols=7):
 
 
 class RandomPlayer(AIPlayer):
-    def __init__(self, name="random", display_name="Random"):
+    supports_difficulty = False
+
+    def __init__(self, difficulty=None, name="random", display_name="Random"):
         super().__init__(name=name, display_name=display_name)
 
     async def make_move(self, obs):
