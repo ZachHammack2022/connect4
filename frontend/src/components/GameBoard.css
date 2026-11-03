@@ -69,7 +69,7 @@
 .disc-yellow { background: radial-gradient(circle at 35% 35%, #fde047, #eab308 60%, #a16207); }
 
 .preview { opacity: 0.4; }
-.faded { opacity: 0.6; }
+.faded { filter: brightness(0.45) saturate(0.8); }
 .winning {
     box-shadow: 0 0 0 3px #fff, 0 0 14px 4px rgba(255, 255, 255, 0.8);
     transform: scale(1.06);

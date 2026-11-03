@@ -147,17 +147,14 @@ function App() {
 
     const onColumnClick = async (column:number) => {
           const humanToMove = (currentPlayer === 'X' ? mode1 : mode2) === 'human';
-          if (board.length === 0 || busyRef.current || (!gameOver && !humanToMove)) {
+          if (board.length === 0 || busyRef.current || !humanToMove) {
             return;
           }
-          if (isColumnFull(column) ) {
-            setError("This column is full. Try a different one.");
+          // The status line and preview disc already show these states, so
+          // clicks after the game ends or on a full column are simply ignored.
+          if (gameOver || isColumnFull(column)) {
             return;
           }
-          if (gameOver) {
-              setError("The game is over. Reset the game to play again.");
-              return;
-            }
           // Show the human's disc straight away and hand the turn over, rather
           // than waiting for the response (which includes the AI's reply).
           const landingRow = board.map((row) => row[column]).lastIndexOf(0);
