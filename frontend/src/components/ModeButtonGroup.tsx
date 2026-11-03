@@ -38,8 +38,8 @@ const ModeButtonGroup: React.FC<ModeButtonGroupProps> = ({ buttons, currentMode,
         {buttons.map((buttonProps, index) => (
             <ModeButton key={index} {...buttonProps} currentMode={currentMode} />
         ))}
-        {/* Reserve the space even when hidden so the board doesn't shift. */}
-        <Box style={{ visibility: difficulty ? 'visible' : 'hidden', textAlign: 'center' }}>
+        {/* On wide screens the space stays reserved so the board doesn't shift (see GameBoard.css). */}
+        <Box className={difficulty ? 'difficulty-picker' : 'difficulty-picker difficulty-hidden'} style={{ textAlign: 'center' }}>
             <Typography variant="caption" component="p">Difficulty</Typography>
             <ToggleButtonGroup
                 orientation="vertical"

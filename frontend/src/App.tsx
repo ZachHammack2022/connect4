@@ -38,6 +38,9 @@ function App() {
     const [difficulty1, setDifficulty1] = useState<Difficulty | null>(null);
     const [difficulty2, setDifficulty2] = useState<Difficulty | null>(null);
     const [winningCells, setWinningCells] = useState<[number, number][]>([]);
+    // True while a game request is in flight (including the AI thinking).
+    const [busy, setBusy] = useState(false);
+    const busyRef = useRef(false);
     // Each side remembers its last difficulty so switching AI keeps it.
     const lastDifficulty = useRef<Record<number, Difficulty>>({ 1: 'medium', 2: 'medium' });
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -105,6 +108,10 @@ function App() {
     // Runs a request against the current game. If the server no longer knows
     // the game (it expired or the server restarted), start a fresh one.
     const withGame = async (action: string, request: (gameId: string) => Promise<GameState>) => {
+        // Ignore clicks while a request is already running (e.g. the AI is thinking).
+        if (busyRef.current) return;
+        busyRef.current = true;
+        setBusy(true);
         try {
             if (!gameIdRef.current) {
                 await startNewGame();
@@ -120,7 +127,14 @@ function App() {
                 }
             } else {
                 setError(`Error while ${action}: ${getErrorMessage(error)}`);
+                // Undo any optimistic update by reloading the real state.
+                try {
+                    if (gameIdRef.current) updateGame(await api.fetchGameState(gameIdRef.current));
+                } catch { /* keep the error already shown */ }
             }
+        } finally {
+            busyRef.current = false;
+            setBusy(false);
         }
     };
 
@@ -132,7 +146,8 @@ function App() {
         handleModeChange(player === 1 ? mode1 : mode2, player, difficulty);
 
     const onColumnClick = async (column:number) => {
-          if (board.length === 0) {
+          const humanToMove = (currentPlayer === 'X' ? mode1 : mode2) === 'human';
+          if (board.length === 0 || busyRef.current || (!gameOver && !humanToMove)) {
             return;
           }
           if (isColumnFull(column) ) {
@@ -143,6 +158,13 @@ function App() {
               setError("The game is over. Reset the game to play again.");
               return;
             }
+          // Show the human's disc straight away and hand the turn over, rather
+          // than waiting for the response (which includes the AI's reply).
+          const landingRow = board.map((row) => row[column]).lastIndexOf(0);
+          setBoard(board.map((row, r) => r === landingRow
+              ? row.map((cell, c) => (c === column ? (currentPlayer === 'X' ? -1 : 1) : cell))
+              : row));
+          setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
           await withGame('making a move', (gameId) => api.makeMove(gameId, column));
     };
 
@@ -234,7 +256,7 @@ const buttons2 = [
                 
                 {/* <hr></hr> */}
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} className="gameboard-padding">
+                    <Grid item xs={12} md={7} className="gameboard-padding">
                         {!username && <UsernameInput setUsername={setUsername} />}
                         {username && (
                           <GameBoard 
@@ -242,6 +264,7 @@ const buttons2 = [
                             currentPlayer={currentPlayer}
                             gameOver={gameOver}
                             winner={winner}
+                            busy={busy}
                             handleColumnClick={onColumnClick}
                             buttons1={buttons1}
                             currentMode1={mode1}
@@ -257,7 +280,7 @@ const buttons2 = [
                     </Grid>
 
 
-                    <Grid item xs={12} sm={6} className="leaderboard-padding">
+                    <Grid item xs={12} md={5} className="leaderboard-padding">
                       <Leaderboard data={leaderboardData} />
                     </Grid>
                 </Grid>
