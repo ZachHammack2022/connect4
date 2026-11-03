@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routers import game_routes, db_routes
 from backend.dependencies import get_database
+from backend.db import ensure_schema
 
 database = get_database()
 
@@ -11,6 +12,7 @@ database = get_database()
 async def lifespan(app: FastAPI):
     # Connect to the database on startup and disconnect on shutdown.
     await database.connect()
+    await ensure_schema(database)
     try:
         yield
     finally:

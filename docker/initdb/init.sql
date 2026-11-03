@@ -1,6 +1,6 @@
 CREATE TABLE games (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    wins INT DEFAULT 0,
-    losses INT DEFAULT 0
+    username VARCHAR(255) NOT NULL UNIQUE,
+    wins INT NOT NULL DEFAULT 0,
+    losses INT NOT NULL DEFAULT 0
 );
