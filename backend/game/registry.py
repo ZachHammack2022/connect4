@@ -1,10 +1,12 @@
 """All playable game types, keyed by the id used in the API and the database."""
 from backend.game.game import Connect4Env
 from backend.game.tictactoe import TicTacToeEnv
+from backend.game.reversi import ReversiEnv
 
 GAME_TYPES = {
     Connect4Env.game_type: Connect4Env,
     TicTacToeEnv.game_type: TicTacToeEnv,
+    ReversiEnv.game_type: ReversiEnv,
 }
 DEFAULT_GAME_TYPE = Connect4Env.game_type
 

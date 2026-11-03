@@ -223,3 +223,98 @@ class TestTicTacToe(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestReversi(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        from backend.game.reversi import ReversiEnv
+        from backend.game import reversi_rules
+        self.Env = ReversiEnv
+        self.rules = reversi_rules
+
+    def test_opening_moves(self):
+        env = self.Env()
+        self.assertEqual(env.counts(), {"X": 2, "O": 2})
+        # Dark's four opening moves.
+        self.assertEqual(sorted(env.valid_actions()), [19, 26, 37, 44])
+        self.assertFalse(env._is_valid_action(0))
+
+    def test_move_flips(self):
+        env = self.Env()
+        env.step(19)  # d3 for dark flips d4
+        self.assertEqual(env.counts(), {"X": 4, "O": 1})
+        self.assertEqual(env.current_player, 'O')
+
+    def test_flips_in_all_directions(self):
+        rules = self.rules
+        cells = [0] * 64
+        centre = 3 * 8 + 3
+        for dr, dc in rules.DIRECTIONS:
+            cells[(3 + dr) * 8 + 3 + dc] = 1          # opponent next to the centre
+            cells[(3 + 2 * dr) * 8 + 3 + 2 * dc] = -1  # own disc beyond it
+        self.assertEqual(len(rules.flips(cells, centre, -1)), 8)
+        after = rules.play(cells, centre, -1)
+        self.assertEqual(after.count(1), 0)
+
+    def test_pass_and_game_end(self):
+        env = self.Env()
+        cells = [-1] * 64
+        cells[0] = 0   # one empty corner...
+        cells[1] = 1   # ...that dark can take by flipping this light disc
+        cells[63] = 0
+        cells[62] = 1
+        env._set_cells(cells)
+        env.current_player = 'X'
+        env.step(0)
+        # Light has no move (no light discs left next to a gap), so dark goes again.
+        self.assertEqual(env.passed, 'O')
+        self.assertEqual(env.current_player, 'X')
+        self.assertFalse(env.terminated)
+        env.step(63)
+        self.assertTrue(env.terminated)
+        self.assertEqual(env.winner, 'X')
+        self.assertEqual(len(env.winning_cells), 64)
+
+    def test_scoring_when_no_one_can_move(self):
+        env = self.Env()
+        env._set_cells([-1 if (i % 8) < 4 else 1 for i in range(64)])
+        env._finish()
+        self.assertTrue(env.terminated)
+        self.assertIsNone(env.winner)  # 32-32 is a draw
+        self.assertEqual(env.winning_cells, [])
+
+    async def test_ai_plays_legal_moves_to_the_end(self):
+        env = self.Env('minimax', 'random')
+        await env.set_mode(1, 'minimax', 'easy')
+        await env.reset_and_start()
+        self.assertTrue(env.terminated)
+        self.assertEqual(sum(env.counts().values()), sum(1 for row in env.board for c in row if c != ' '))
+
+    def test_ai_prefers_a_corner(self):
+        from backend.game.agents.reversi_ai import best_move
+        cells = [0] * 64
+        # Dark can take corner 0 (flipping 1) or play 29 (flipping 28).
+        cells[1] = 1; cells[2] = -1
+        cells[27] = -1; cells[28] = 1
+        self.assertEqual(sorted(self.rules.legal_moves(cells, -1)), [0, 29])
+        self.assertEqual(best_move(cells, -1, depth=1), 0)
+
+    async def test_hard_ai_returns_a_legal_move_quickly(self):
+        import time
+        from backend.game.agents.reversi_ai import ReversiMinimaxPlayer
+        env = self.Env()
+        for move in [19, 18, 17, 9]:
+            if env._is_valid_action(move):
+                env.step(move)
+        start = time.time()
+        move = await ReversiMinimaxPlayer(difficulty="hard").make_move(env._get_obs(), to_move=env._player_int())
+        self.assertIn(move, env.valid_actions())
+        self.assertLess(time.time() - start, 5)
+
+    def test_save_and_load(self):
+        env = self.Env()
+        env.step(19)
+        copy = game_from_dict(env.to_dict())
+        self.assertEqual(copy.board, env.board)
+        self.assertEqual(copy.current_player, 'O')
+        self.assertEqual(copy.game_type, 'reversi')

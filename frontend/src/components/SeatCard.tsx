@@ -14,6 +14,8 @@ interface SeatCardProps {
     active: boolean;
     thinking: boolean;
     won: boolean;
+    // Pieces on the board, for games scored by count.
+    score?: number;
     // The human player's name, when this seat is the only human one.
     playerName?: string;
     disabled: boolean;
@@ -34,7 +36,7 @@ export const Token: React.FC<{ side: Side }> = ({ side }) => (
 );
 
 const SeatCard: React.FC<SeatCardProps> = ({
-    side, label, modes, mode, difficulty, hasDifficulty, active, thinking, won, playerName,
+    side, label, modes, mode, difficulty, hasDifficulty, active, thinking, won, score, playerName,
     disabled, onModeChange, onDifficultyChange,
 }) => {
     const modeLabel = modes.find((m) => m.mode === mode)?.label ?? mode;
@@ -46,7 +48,10 @@ const SeatCard: React.FC<SeatCardProps> = ({
             <header className="seat-head">
                 <Token side={side} />
                 <div className="seat-names">
-                    <span className="seat-side">{label}</span>
+                    <span className="seat-side">
+                        {label}
+                        {score !== undefined && <span className="seat-score" aria-label={`${score} discs`}>{score}</span>}
+                    </span>
                     <span className="seat-who">{who}</span>
                 </div>
                 <span className="seat-badge" aria-live="polite">

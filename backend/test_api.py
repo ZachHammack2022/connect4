@@ -61,6 +61,20 @@ class TestGameApi(unittest.TestCase):
         self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'move': 4}).status_code, 400)
         self.assertEqual(self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'mcts'}).status_code, 400)
 
+    def test_reversi_game(self):
+        state = self.client.post('/games', json={'game_type': 'reversi'}).json()
+        self.assertEqual((state['game_type'], state['rows'], state['cols']), ('reversi', 8, 8))
+        self.assertEqual(sorted(state['legal_moves']), [19, 26, 37, 44])
+        self.assertIsNone(state['passed'])
+        game_id = state['game_id']
+        self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'move': 0}).status_code, 400)
+        self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'minimax', 'difficulty': 'easy'})
+        state = self.client.post(f'/games/{game_id}/move', json={'move': 19}).json()
+        # Dark's move and the AI's reply: two new discs.
+        self.assertEqual(sum(cell != 0 for cell in state['board']), 6)
+        self.assertEqual(state['current_player'], 'X')
+        self.assertTrue(state['legal_moves'])
+
     def test_default_game_is_connect4(self):
         state = self.client.post('/games').json()
         self.assertEqual((state['game_type'], state['rows'], state['cols']), ('connect4', 6, 7))

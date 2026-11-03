@@ -5,6 +5,7 @@ export interface BoardProps {
     cols: number;
     currentPlayer: 'X' | 'O';
     winningCells: [number, number][];
+    legalMoves: number[];
     // True when a human may move now; boards show previews/pointer only then.
     interactive: boolean;
     onMove: (move: number) => void;

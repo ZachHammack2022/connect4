@@ -12,7 +12,8 @@ A full-stack web app for classic two-player board games. Play against a friend o
 | --- | --- |
 | Connect 4 | Random, Minimax, MCTS (easy/medium/hard), DQN (placeholder) |
 | Tic-Tac-Toe | Random, Minimax (easy/medium/hard; hard plays perfectly) |
-| Reversi, Checkers, Dots and Boxes, Gomoku | Coming soon |
+| Reversi | Random, Minimax (alpha-beta with positional and mobility evaluation; easy/medium/hard) |
+| Checkers, Dots and Boxes, Gomoku | Coming soon |
 
 ## Features
 - **Home menu**: Pick a game; set a name once (remembered in the browser, no account needed).
@@ -67,9 +68,9 @@ To train the RL agents in `rl_agent/`, install the extra training dependencies w
 ### API
 | Method | Path | Description |
 | --- | --- | --- |
-| POST | `/games` | `{"game_type": "connect4" or "tictactoe"}` (default connect4) – start a new game; returns its `game_id` and state |
+| POST | `/games` | `{"game_type": "connect4", "tictactoe" or "reversi"}` (default connect4) – start a new game; returns its `game_id` and state |
 | GET | `/games/{game_id}` | Current state |
-| POST | `/games/{game_id}/move` | `{"move": n}` – a column (0-6) in Connect 4, a cell (0-8) in tic-tac-toe. The AI replies automatically |
+| POST | `/games/{game_id}/move` | `{"move": n}` – a column (0-6) in Connect 4, a cell (0-8) in tic-tac-toe, a cell (0-63) in Reversi. The state lists `legal_moves`, and `passed` names a side that had no move. The AI replies automatically |
 | POST | `/games/{game_id}/mode` | `{"player": 1 or 2, "mode": ..., "difficulty": "easy", "medium" or "hard"}`; the modes a game offers are listed in its state |
 | POST | `/games/{game_id}/reset` | Restart the game, keeping the chosen players |
 | GET | `/leaderboard/?game_type=...` | A game's leaderboard |
@@ -78,7 +79,7 @@ To train the RL agents in `rl_agent/`, install the extra training dependencies w
 Games are stored in Postgres by default. Set `GAME_STORE=memory` to keep them in the backend's memory instead (no database needed for games, but they end when the backend restarts and only work with a single backend process). If a game is gone, the frontend starts a new one automatically.
 
 ## Upcoming
-- **More games**: Reversi, Checkers, Dots and Boxes and Gomoku, each with AI opponents.
+- **More games**: Checkers, Dots and Boxes and Gomoku, each with AI opponents.
 - **Trained DQN agent** for Connect 4 (training code is in `rl_agent/`).
 - **Accounts**, so leaderboard names can't be used by someone else.
 
