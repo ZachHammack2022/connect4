@@ -75,6 +75,19 @@ class TestGameApi(unittest.TestCase):
         self.assertEqual(state['current_player'], 'X')
         self.assertTrue(state['legal_moves'])
 
+    def test_undo_and_history(self):
+        game_id = self.new_game()['game_id']
+        self.assertEqual(self.client.post(f'/games/{game_id}/undo').status_code, 400)
+        self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'random'})
+        state = self.client.post(f'/games/{game_id}/move', json={'move': 3}).json()
+        self.assertEqual(len(state['history']), 2)
+        self.assertEqual(state['history'][0], {'player': 'X', 'move': 3, 'cell': [5, 3]})
+        self.assertFalse(state['assisted'])
+        state = self.client.post(f'/games/{game_id}/undo').json()
+        self.assertEqual(state['history'], [])
+        self.assertTrue(state['assisted'])
+        self.assertEqual(state['current_player'], 'X')
+
     def test_default_game_is_connect4(self):
         state = self.client.post('/games').json()
         self.assertEqual((state['game_type'], state['rows'], state['cols']), ('connect4', 6, 7))

@@ -318,3 +318,64 @@ class TestReversi(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(copy.board, env.board)
         self.assertEqual(copy.current_player, 'O')
         self.assertEqual(copy.game_type, 'reversi')
+
+
+class TestUndoAndHistory(unittest.IsolatedAsyncioTestCase):
+    def test_history_records_moves_and_cells(self):
+        env = Connect4Env()
+        env.step(3)
+        env.step(3)
+        self.assertEqual([(m["player"], m["move"], m["cell"]) for m in env.history],
+                         [('X', 3, [5, 3]), ('O', 3, [4, 3])])
+
+    def test_undo_two_humans_takes_back_one_move(self):
+        env = TicTacToeEnv()
+        env.step(4)
+        env.step(0)
+        self.assertTrue(env.undo())
+        self.assertEqual(env._get_obs()[0], 0)
+        self.assertEqual(env._get_obs()[4], -1)
+        self.assertEqual(env.current_player, 'O')
+        self.assertTrue(env.assisted)
+
+    async def test_undo_against_ai_takes_back_the_reply_too(self):
+        env = Connect4Env()
+        await env.set_mode(2, 'random')
+        await env.play_turn(3)
+        self.assertEqual(len(env.history), 2)
+        self.assertEqual([m["by"] for m in env.history], ["human", "ai"])
+        self.assertTrue(env.undo())
+        self.assertEqual(env.history, [])
+        self.assertEqual(sum(1 for c in env._get_obs() if c), 0)
+        self.assertEqual(env.current_player, 'X')
+
+    async def test_undo_with_ai_moving_first(self):
+        env = TicTacToeEnv()
+        await env.set_mode(1, 'random')   # AI opens as X
+        await env.play_turn(next(i for i in range(9) if env._get_obs()[i] == 0))
+        self.assertEqual(len(env.history), 3)
+        self.assertTrue(env.undo())
+        self.assertEqual([m["by"] for m in env.history], ["ai"])
+        self.assertEqual(env.current_player, 'O')
+
+    def test_nothing_to_undo(self):
+        env = Connect4Env()
+        self.assertFalse(env.undo())
+        self.assertFalse(env.assisted)
+
+    def test_no_undo_after_the_game_ends(self):
+        env = TicTacToeEnv()
+        for move in [0, 3, 1, 4, 2]:
+            env.step(move)
+        self.assertTrue(env.terminated)
+        self.assertFalse(env.undo())
+
+    def test_undo_through_a_reversi_pass_and_history_survives_saving(self):
+        from backend.game.reversi import ReversiEnv
+        env = ReversiEnv()
+        env.step(19)
+        env.step(18)
+        copy = game_from_dict(env.to_dict())
+        self.assertEqual(copy.history, env.history)
+        self.assertTrue(copy.undo())
+        self.assertEqual(copy.counts(), {"X": 4, "O": 1})

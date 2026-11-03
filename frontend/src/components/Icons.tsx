@@ -40,3 +40,4 @@ export const X = (p: IconProps) => <Icon {...p}><path d="M18 6 6 18M6 6l12 12" /
 export const Alert = (p: IconProps) => (
     <Icon {...p}><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></Icon>
 );
+export const Undo = (p: IconProps) => <Icon {...p}><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></Icon>;

@@ -29,6 +29,9 @@ export interface AvailableGame {
     // The board after `piece` (-1 X, 1 O) plays `move`, used to show the
     // human's move instantly; null if the move isn't possible.
     applyMove: (board: number[], move: number, cols: number, piece: number) => number[] | null;
+    // Move list notation: squares are named file letter + rank; Connect 4
+    // counts ranks from the bottom, the others from the top.
+    rankFromBottom?: boolean;
     // Pieces each side has on the board, for games scored by count.
     score?: (board: number[]) => Record<Side, number>;
 }
@@ -90,6 +93,7 @@ export const GAMES: GameInfo[] = [
         ],
         difficultyModes: ['minimax', 'mcts'],
         sideLabels: { X: 'Red', O: 'Yellow' },
+        rankFromBottom: true,
         applyMove: (board, column, cols, piece) => {
             // Discs fall to the lowest empty cell in the column.
             for (let index = board.length - cols + column; index >= 0; index -= cols) {
@@ -141,6 +145,9 @@ export const GAMES: GameInfo[] = [
     { id: 'dots-and-boxes', name: 'Dots and Boxes', tagline: 'Draw lines, close boxes, claim the board.', status: 'coming-soon', tint: '#2fa7d8' },
     { id: 'gomoku', name: 'Gomoku', tagline: 'Five in a row on a big board.', status: 'coming-soon', tint: '#c68a2e' },
 ];
+
+export const squareName = (game: AvailableGame, [row, col]: [number, number], rows: number) =>
+    `${'abcdefghijklmnopqrstuvwxyz'[col]}${game.rankFromBottom ? rows - row : row + 1}`;
 
 export const AVAILABLE_GAMES = GAMES.filter((game): game is AvailableGame => game.status === 'available');
 

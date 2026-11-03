@@ -64,3 +64,13 @@
 .won-by-X .ttt-cell.winning { background: color-mix(in srgb, var(--x-color) 22%, var(--surface)); box-shadow: 0 0 0 2px var(--x-color), 0 10px 30px -8px var(--x-color); }
 .won-by-O .ttt-cell.winning { background: color-mix(in srgb, var(--o-color) 22%, var(--surface)); box-shadow: 0 0 0 2px var(--o-color), 0 10px 30px -8px var(--o-color); }
 .ttt-cell.faded { opacity: 0.4; }
+
+.ttt-cell.last:not(.winning)::after {
+    content: '';
+    position: absolute;
+    bottom: 10%;
+    width: 18%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--text-faint);
+}

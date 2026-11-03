@@ -103,3 +103,12 @@
 @media (hover: none) {
     .c4-hover-row { display: none; }
 }
+
+/* A small ring marks the most recent disc. */
+.c4 .hole.last::after {
+    content: '';
+    position: absolute;
+    inset: 34%;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+}

@@ -112,6 +112,15 @@
     border-top: 1px solid var(--border);
 }
 .play-hint { font-size: 13px; color: var(--text-faint); }
+.play-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.chip-practice {
+    height: auto;
+    min-height: 24px;
+    white-space: normal;
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
+    border-color: color-mix(in srgb, var(--gold) 35%, transparent);
+    color: var(--text);
+}
 
 .game-page > .leaderboard { margin-top: 24px; }
 @media (min-width: 760px) {
@@ -131,4 +140,5 @@
     .status-bar.is-over { flex-wrap: wrap; justify-content: center; }
     .status-result strong { font-size: 19px; }
     .play-footer { flex-direction: column-reverse; align-items: stretch; text-align: center; }
+    .play-actions > .btn { flex: 1; }
 }

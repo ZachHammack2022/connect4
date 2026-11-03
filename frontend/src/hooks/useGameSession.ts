@@ -59,6 +59,8 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         const human1 = next.mode1 === 'human';
         const human2 = next.mode2 === 'human';
         if (human1 === human2) return;
+        // Games where a human took moves back are practice: not recorded.
+        if (next.assisted) return;
         const humanSide = human1 ? 'X' : 'O';
         submitResult(!next.winner ? 'draw' : next.winner === humanSide ? 'win' : 'loss');
     };
@@ -111,7 +113,12 @@ export const useGameSession = (game: AvailableGame, username: string) => {
         if (!board) return;  // full column / taken cell: nothing to do
         // Show the human's move straight away and hand the turn over, rather
         // than waiting for the response (which includes any AI reply).
-        setState({ ...state, board, current_player: state.current_player === 'X' ? 'O' : 'X', legal_moves: [], passed: null });
+        const cellIndex = board.findIndex((cell, i) => cell !== 0 && state.board[i] === 0);
+        const cell: [number, number] | null = cellIndex >= 0 ? [Math.floor(cellIndex / state.cols), cellIndex % state.cols] : null;
+        setState({
+            ...state, board, current_player: state.current_player === 'X' ? 'O' : 'X', legal_moves: [], passed: null,
+            history: [...(state.history ?? []), { player: state.current_player, move: moveIndex, cell }],
+        });
         await withGame('making a move', (gameId) => api.makeMove(gameId, moveIndex));
     };
 
@@ -122,6 +129,16 @@ export const useGameSession = (game: AvailableGame, username: string) => {
     const changeDifficulty = (player: number, difficulty: Difficulty) => {
         if (!state) return;
         return changeMode(player, player === 1 ? state.mode1 : state.mode2, difficulty);
+    };
+
+    // Whether there is a human move to take back (the server has the final say).
+    const humanSides = state ? (['X', 'O'] as const).filter((side) => (side === 'X' ? state.mode1 : state.mode2) === 'human') : [];
+    const canUndo = !!state && !state.done && !busy
+        && (state.history ?? []).some((m) => (humanSides as readonly string[]).includes(m.player));
+
+    const undo = async () => {
+        if (!canUndo) return;
+        await withGame('undoing a move', api.undoMove);
     };
 
     const reset = async () => {
@@ -176,6 +193,6 @@ export const useGameSession = (game: AvailableGame, username: string) => {
 
     return {
         state, busy, error, clearError, leaderboard, leaderboardLoading,
-        currentMode, humanToMove, move, changeMode, changeDifficulty, reset,
+        currentMode, humanToMove, move, changeMode, changeDifficulty, reset, undo, canUndo,
     };
 };
