@@ -64,7 +64,14 @@ pip install -e ".[dev]"
 python -m unittest backend.game.env_testing backend.test_api backend.test_leaderboard backend.test_postgres_games
 ```
 
-The leaderboard and Postgres game tests need a database and are skipped unless `TEST_DATABASE_URL` is set (they clear the `games` and `game_sessions` tables, so don't point them at real data). CI runs everything, including the frontend build, on every pull request.
+The leaderboard and Postgres game tests need a database and are skipped unless `TEST_DATABASE_URL` is set (they clear the `games` and `game_sessions` tables, so don't point them at real data). CI runs everything, including the frontend tests and build, on every pull request.
+
+### Running the frontend tests
+From `frontend/`:
+
+```bash
+npm test
+```
 
 To train the RL agents in `rl_agent/`, install the extra training dependencies with `pip install -e ".[rl]"`.
 
