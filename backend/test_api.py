@@ -1,14 +1,18 @@
-"""API tests for per-user games. They don't touch the database: the
-TestClient is used without its context manager, so startup doesn't run."""
+"""API tests for per-user games using the in-memory game store. They don't
+touch the database: the TestClient is used without its context manager, so
+startup doesn't run. Postgres-backed games are tested in test_postgres_games."""
+import asyncio
 import unittest
 from fastapi.testclient import TestClient
 
 from backend.app import app
-from backend.game_store import GameStore
+from backend.dependencies import set_game_store
+from backend.game_store import GameNotFound, MemoryGameStore
 
 
 class TestGameApi(unittest.TestCase):
     def setUp(self):
+        set_game_store(MemoryGameStore())
         self.client = TestClient(app)
 
     def new_game(self):
@@ -59,22 +63,27 @@ class TestGameApi(unittest.TestCase):
         self.assertEqual(sum(cell != 0 for cell in state['board']), 1)
 
 
-class TestGameStore(unittest.TestCase):
-    def test_idle_games_expire(self):
-        store = GameStore(idle_timeout=0)
-        game_id, _ = store.create()
-        with self.assertRaises(KeyError):
-            store.get(game_id)
+class TestMemoryGameStore(unittest.IsolatedAsyncioTestCase):
+    async def assert_missing(self, store, game_id):
+        with self.assertRaises(GameNotFound):
+            async with store.open(game_id):
+                pass
 
-    def test_size_cap_evicts_least_recently_used(self):
-        store = GameStore(max_games=2)
-        first, _ = store.create()
-        second, _ = store.create()
-        store.get(first)          # first is now the most recently used
-        store.create()            # evicts second
-        store.get(first)
-        with self.assertRaises(KeyError):
-            store.get(second)
+    async def test_idle_games_expire(self):
+        store = MemoryGameStore(idle_timeout=0)
+        game_id, _ = await store.create()
+        await self.assert_missing(store, game_id)
+
+    async def test_size_cap_evicts_least_recently_used(self):
+        store = MemoryGameStore(max_games=2)
+        first, _ = await store.create()
+        second, _ = await store.create()
+        async with store.open(first):  # first is now the most recently used
+            pass
+        await store.create()           # evicts second
+        async with store.open(first):
+            pass
+        await self.assert_missing(store, second)
         self.assertEqual(len(store), 2)
 
 
