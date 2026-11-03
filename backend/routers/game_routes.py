@@ -31,6 +31,8 @@ def game_state(game_id: str, game: TurnBasedGame):
         # Moves the side to move may play (empty once the game is over).
         "legal_moves": [] if game.terminated else game.valid_actions(),
         "passed": game.passed,
+        "history": [{"player": m["player"], "move": m["move"], "cell": m["cell"]} for m in game.history],
+        "assisted": game.assisted,
     }
 
 
@@ -74,6 +76,18 @@ async def make_move(game_id: str, move: Move):
 async def reset_game(game_id: str):
     async with open_game(game_id) as game:
         await game.reset_and_start()
+        return game_state(game_id, game)
+
+
+@router.post("/{game_id}/undo")
+async def undo_move(game_id: str):
+    async with open_game(game_id) as game:
+        if game.terminated:
+            raise HTTPException(status_code=400, detail="The game is over. Start a new game to play again.")
+        if not game.undo():
+            raise HTTPException(status_code=400, detail="There is no move of yours to undo.")
+        # If it is now an AI's turn (players were changed mid-game), let it move.
+        await game.run_ai_turns()
         return game_state(game_id, game)
 
 

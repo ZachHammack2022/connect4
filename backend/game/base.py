@@ -46,6 +46,33 @@ class TurnBasedGame:
     def valid_actions(self):
         return [action for action in range(self.num_actions) if self._is_valid_action(action)]
 
+    def _play_and_record(self, action):
+        """Apply a valid move for the current player and add it to the history."""
+        before = [row[:] for row in self.board]
+        self._make_move(action)
+        # The cell the new piece went into (for Connect 4 the move is only a column).
+        cell = next(([r, c] for r in range(self.ROWS) for c in range(self.COLS)
+                     if before[r][c] == ' ' and self.board[r][c] != ' '), None)
+        self.history.append({"player": self.current_player, "move": action, "cell": cell, "by": "human"})
+
+    def undo(self):
+        """Take back the last human move, and any AI replies made after it.
+
+        Returns False if there is nothing to undo or the game is over.
+        """
+        if self.terminated:
+            return False
+        human_moves = [i for i, entry in enumerate(self.history) if entry["by"] == "human"]
+        if not human_moves:
+            return False
+        kept = self.history[:human_moves[-1]]
+        self.reset()
+        for entry in kept:
+            self.step(entry["move"])
+            self.history[-1]["by"] = entry["by"]
+        self.assisted = True
+        return True
+
     def ai_context(self):
         """Extra keyword arguments for AI players' make_move (e.g. whose turn it is)."""
         return {}
@@ -68,6 +95,11 @@ class TurnBasedGame:
         self.winning_cells = []
         # The side that had to pass on the last turn (games with passing only).
         self.passed = None
+        # Moves played so far: {"player", "move", "cell": [row, col], "by": "human"|"ai"}.
+        self.history = []
+        # Whether a human used undo (or a hint) this game, so it doesn't count
+        # towards the leaderboard.
+        self.assisted = False
         return self._get_obs()
 
     def render(self, mode='human', close=False):
@@ -83,7 +115,7 @@ class TurnBasedGame:
         if not self._is_valid_action(action):
             return self._get_obs(), -2, True, {"msg": "Invalid action."}
 
-        self._make_move(action)
+        self._play_and_record(action)
 
         winning_cells = self.find_winning_cells(self.current_player)
         if winning_cells:
@@ -122,7 +154,11 @@ class TurnBasedGame:
         if ai_action is None or not self._is_valid_action(ai_action):
             ai_action = random.choice(legal)
 
-        return self.step(ai_action)
+        moves_before = len(self.history)
+        result = self.step(ai_action)
+        if len(self.history) > moves_before:
+            self.history[-1]["by"] = "ai"
+        return result
 
     def get_ai_player(self):
         """Return the AI whose turn it is, or None if it is a human's turn."""
@@ -163,6 +199,8 @@ class TurnBasedGame:
             "winner": self.winner,
             "winning_cells": self.winning_cells,
             "passed": self.passed,
+            "history": self.history,
+            "assisted": self.assisted,
             "players": [
                 {"mode": player.name, "difficulty": player.difficulty}
                 for player in (self.player1, self.player2)
@@ -181,4 +219,6 @@ class TurnBasedGame:
         game.winner = data["winner"]
         game.winning_cells = data["winning_cells"]
         game.passed = data.get("passed")
+        game.history = data.get("history", [])
+        game.assisted = data.get("assisted", False)
         return game

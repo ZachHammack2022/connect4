@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BoardProps, activateOnKey, isWinningCell, toRows } from './types';
+import { BoardProps, activateOnKey, isLastCell, isWinningCell, toRows } from './types';
 import { reversiFlips } from '../../games';
 import './ReversiBoard.css';
 
 const FILES = 'abcdefgh';
 
-const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, legalMoves, interactive, onMove }) => {
+const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, legalMoves, lastCell, interactive, onMove }) => {
     const [hovered, setHovered] = useState<number | null>(null);
     const grid = toRows(board, rows, cols);
     const piece = currentPlayer === 'X' ? -1 : 1;
@@ -58,7 +58,8 @@ const ReversiBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, 
                             return (
                                 <div
                                     key={index}
-                                    className={['rv-cell', isLegal ? 'legal' : '', winning ? 'winning' : '', faded ? 'faded' : ''].filter(Boolean).join(' ')}
+                                    className={['rv-cell', isLegal ? 'legal' : '', winning ? 'winning' : '', faded ? 'faded' : '',
+                                        cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : ''].filter(Boolean).join(' ')}
                                     role="gridcell"
                                     tabIndex={isLegal ? 0 : -1}
                                     data-cell={index}

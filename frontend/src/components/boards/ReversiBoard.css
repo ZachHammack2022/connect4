@@ -80,3 +80,13 @@
 
 .rv-cell.faded .rv-disc { filter: saturate(0.5) brightness(0.6); opacity: 0.7; }
 .rv-cell.winning .rv-disc { box-shadow: 0 0 0 2px #fff, 0 0 12px 3px rgba(255, 255, 255, 0.5); }
+
+.rv-cell.last::after {
+    content: '';
+    position: absolute;
+    width: 16%;
+    height: 16%;
+    border-radius: 50%;
+    background: #ff4d5e;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SeatCard, { Token } from '../components/SeatCard';
 import Leaderboard from '../components/Leaderboard';
 import NameForm from '../components/NameForm';
 import Toast from '../components/Toast';
-import { ArrowLeft, Refresh } from '../components/Icons';
+import { ArrowLeft, Refresh, Undo } from '../components/Icons';
+import MoveList from '../components/MoveList';
 import Connect4Board from '../components/boards/Connect4Board';
 import TicTacToeBoard from '../components/boards/TicTacToeBoard';
 import ReversiBoard from '../components/boards/ReversiBoard';
@@ -91,6 +92,21 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
         );
     };
 
+    // Ctrl/Cmd+Z takes back a move (but not while typing in a field).
+    const { undo } = session;
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+            if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z') {
+                event.preventDefault();
+                undo();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [undo]);
+
     const pageStyle = {
         '--x-color': game.sideColors.X,
         '--o-color': game.sideColors.O,
@@ -146,6 +162,7 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                                     currentPlayer={state.current_player}
                                     winningCells={state.winning_cells}
                                     legalMoves={state.legal_moves ?? []}
+                                    lastCell={state.history?.length ? state.history[state.history.length - 1].cell : null}
                                     interactive={session.humanToMove}
                                     onMove={session.move}
                                 />
@@ -155,13 +172,23 @@ const GamePage: React.FC<GamePageProps> = ({ game, username, setUsername }) => {
                     <div className="table-seat table-seat-o">{seat('O')}</div>
                 </div>
 
+                {state && <MoveList game={game} history={state.history ?? []} rows={state.rows} />}
+
                 <div className="play-footer">
                     <span className="play-hint">
-                        {sideNameOf('X')} moves first. Switch either side between a human and an AI at any time.
+                        {state?.assisted && humanSide
+                            ? <span className="chip chip-practice">Practice game: moves were undone, so this one won’t count</span>
+                            : <>{sideNameOf('X')} moves first. Switch either side between a human and an AI at any time.</>}
                     </span>
-                    <button type="button" className="btn btn-outline btn-sm" onClick={session.reset} disabled={!state || busy}>
-                        <Refresh /> Restart
-                    </button>
+                    <div className="play-actions">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={session.undo} disabled={!session.canUndo}
+                            title="Undo (Ctrl+Z)" aria-keyshortcuts="Control+Z Meta+Z">
+                            <Undo /> Undo
+                        </button>
+                        <button type="button" className="btn btn-outline btn-sm" onClick={session.reset} disabled={!state || busy}>
+                            <Refresh /> Restart
+                        </button>
+                    </div>
                 </div>
             </section>
 

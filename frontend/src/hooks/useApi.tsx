@@ -49,6 +49,11 @@ export const changeMode = async (gameId: string, mode: string, player: number, d
     return response.data;
 };
 
+export const undoMove = async (gameId: string): Promise<GameState> => {
+    const response = await axios.post<GameState>(`/games/${gameId}/undo`);
+    return response.data;
+};
+
 export const resetGame = async (gameId: string): Promise<GameState> => {
     const response = await axios.post<GameState>(`/games/${gameId}/reset`);
     return response.data;

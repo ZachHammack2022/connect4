@@ -70,7 +70,7 @@ class ReversiEnv(TurnBasedGame):
         if not self._is_valid_action(action):
             return self._get_obs(), -2, True, {"msg": "Invalid action."}
 
-        self._make_move(action)
+        self._play_and_record(action)
         self.passed = None
         mover = self.current_player
         opponent = 'O' if mover == 'X' else 'X'

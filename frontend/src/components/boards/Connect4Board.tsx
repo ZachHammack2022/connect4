@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BoardProps, activateOnKey, isWinningCell, toRows } from './types';
+import { BoardProps, activateOnKey, isLastCell, isWinningCell, toRows } from './types';
 import './Connect4Board.css';
 
 const discClass = (cell: number) => (cell === -1 ? 'disc disc-X' : cell === 1 ? 'disc disc-O' : '');
 
-const Connect4Board: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, interactive, onMove }) => {
+const Connect4Board: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, lastCell, interactive, onMove }) => {
     const [hoveredColumn, setHoveredColumn] = useState<number | null>(null);
     const grid = toRows(board, rows, cols);
 
@@ -62,6 +62,7 @@ const Connect4Board: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer,
                                 discClass(cell),
                                 preview ? `disc ${sideClass} preview` : '',
                                 winning ? 'winning' : '',
+                                cell !== 0 && isLastCell(lastCell, rowIndex, columnIndex) ? 'last' : '',
                                 faded ? 'faded' : '',
                                 newDiscs.has(index) ? 'dropping' : '',
                             ].filter(Boolean).join(' ');

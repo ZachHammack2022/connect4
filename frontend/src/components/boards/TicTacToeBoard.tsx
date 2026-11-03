@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BoardProps, activateOnKey, isWinningCell, toRows } from './types';
+import { BoardProps, activateOnKey, isLastCell, isWinningCell, toRows } from './types';
 import './TicTacToeBoard.css';
 
 const Mark: React.FC<{ value: number; animate?: boolean }> = ({ value, animate = true }) =>
@@ -14,7 +14,7 @@ const Mark: React.FC<{ value: number; animate?: boolean }> = ({ value, animate =
         </svg>
     );
 
-const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, interactive, onMove }) => {
+const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer, winningCells, lastCell, interactive, onMove }) => {
     const [hovered, setHovered] = useState<number | null>(null);
     const grid = toRows(board, rows, cols);
     const winner = winningCells.length > 0
@@ -39,7 +39,8 @@ const TicTacToeBoard: React.FC<BoardProps> = ({ board, rows, cols, currentPlayer
                         return (
                             <div
                                 key={index}
-                                className={['ttt-cell', cell === 0 ? 'empty' : '', winning ? 'winning' : '', faded ? 'faded' : ''].filter(Boolean).join(' ')}
+                                className={['ttt-cell', cell === 0 ? 'empty' : '', winning ? 'winning' : '', faded ? 'faded' : '',
+                                    cell !== 0 && isLastCell(lastCell, r, c) ? 'last' : ''].filter(Boolean).join(' ')}
                                 role="gridcell"
                                 tabIndex={cell === 0 ? 0 : -1}
                                 data-cell={index}

@@ -6,6 +6,8 @@ export interface BoardProps {
     currentPlayer: 'X' | 'O';
     winningCells: [number, number][];
     legalMoves: number[];
+    // Where the most recent piece went, to mark it.
+    lastCell: [number, number] | null;
     // True when a human may move now; boards show previews/pointer only then.
     interactive: boolean;
     onMove: (move: number) => void;
@@ -24,3 +26,6 @@ export const activateOnKey = (event: React.KeyboardEvent, action: () => void) =>
         action();
     }
 };
+
+export const isLastCell = (lastCell: [number, number] | null, row: number, col: number) =>
+    !!lastCell && lastCell[0] === row && lastCell[1] === col;

@@ -25,6 +25,16 @@ export interface GameState {
     legal_moves: number[];
     // The side that had to pass on the last turn, in games with passing.
     passed: 'X' | 'O' | null;
+    // Moves so far, oldest first; `cell` is where the piece went.
+    history: MoveRecord[];
+    // A human used undo this game, so its result won't be recorded.
+    assisted: boolean;
+}
+
+export interface MoveRecord {
+    player: 'X' | 'O';
+    move: number;
+    cell: [number, number] | null;
 }
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
