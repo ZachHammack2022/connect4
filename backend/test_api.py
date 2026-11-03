@@ -100,6 +100,16 @@ class TestGameApi(unittest.TestCase):
         self.client.post(f'/games/{game_id}/mode', json={'player': 1, 'mode': 'random'})
         self.assertEqual(self.client.post(f'/games/{game_id}/hint').status_code, 400)
 
+    def test_gomoku_game(self):
+        state = self.client.post('/games', json={'game_type': 'gomoku'}).json()
+        self.assertEqual((state['game_type'], state['rows'], state['cols']), ('gomoku', 15, 15))
+        self.assertEqual(state['modes'], ['human', 'random', 'heuristic'])
+        game_id = state['game_id']
+        self.client.post(f'/games/{game_id}/mode', json={'player': 2, 'mode': 'heuristic', 'difficulty': 'hard'})
+        state = self.client.post(f'/games/{game_id}/move', json={'move': 112}).json()
+        self.assertEqual(sum(cell != 0 for cell in state['board']), 2)
+        self.assertEqual(self.client.post(f'/games/{game_id}/move', json={'move': 225}).status_code, 400)
+
     def test_default_game_is_connect4(self):
         state = self.client.post('/games').json()
         self.assertEqual((state['game_type'], state['rows'], state['cols']), ('connect4', 6, 7))

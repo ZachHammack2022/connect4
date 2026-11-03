@@ -141,9 +141,27 @@ export const GAMES: GameInfo[] = [
         },
         score: (board) => ({ X: board.filter((c) => c === -1).length, O: board.filter((c) => c === 1).length }),
     },
+    {
+        id: 'gomoku',
+        name: 'Gomoku',
+        path: '/gomoku',
+        tagline: 'Five in a row on a 15×15 board. Block early, block often.',
+        status: 'available',
+        tint: '#c68a2e',
+        sideColors: { X: '#20232b', O: '#f3f0e8' },
+        accentColors: { X: '#e0a84a', O: '#e0a84a' },
+        modes: [
+            { mode: 'human', label: 'Human' },
+            { mode: 'random', label: 'Random' },
+            { mode: 'heuristic', label: 'Threat AI' },
+        ],
+        difficultyModes: ['heuristic'],
+        sideLabels: { X: 'Black', O: 'White' },
+        rankFromBottom: true,
+        applyMove: (board, cell, _cols, piece) => (board[cell] === 0 ? place(board, [cell], piece) : null),
+    },
     { id: 'checkers', name: 'Checkers', tagline: 'Jump, capture and crown your pieces.', status: 'coming-soon', tint: '#d9582b' },
     { id: 'dots-and-boxes', name: 'Dots and Boxes', tagline: 'Draw lines, close boxes, claim the board.', status: 'coming-soon', tint: '#2fa7d8' },
-    { id: 'gomoku', name: 'Gomoku', tagline: 'Five in a row on a big board.', status: 'coming-soon', tint: '#c68a2e' },
 ];
 
 export const squareName = (game: AvailableGame, [row, col]: [number, number], rows: number) =>

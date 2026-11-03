@@ -9,6 +9,7 @@ import MoveList from '../components/MoveList';
 import Connect4Board from '../components/boards/Connect4Board';
 import TicTacToeBoard from '../components/boards/TicTacToeBoard';
 import ReversiBoard from '../components/boards/ReversiBoard';
+import GomokuBoard from '../components/boards/GomokuBoard';
 import { BoardProps } from '../components/boards/types';
 import { useGameSession } from '../hooks/useGameSession';
 import { useLeaderboard } from '../hooks/useLeaderboard';
@@ -20,6 +21,7 @@ const BOARDS: Record<string, React.FC<BoardProps>> = {
     connect4: Connect4Board,
     tictactoe: TicTacToeBoard,
     reversi: ReversiBoard,
+    gomoku: GomokuBoard,
 };
 
 interface GamePageProps {
